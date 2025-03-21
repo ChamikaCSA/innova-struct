@@ -1,7 +1,10 @@
 // language: jsx
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ClientNavbar from "../../components/ClientNavbar";
-import { Upload,  FileText, Users, Clock, Building } from 'lucide-react';
+import { Upload, FileText, Users, Clock, Building } from 'lucide-react';
+import tenderService from '../../services/tenderService';
+import userService from '../../services/userService';
 
 export default function CreateTender() {
   const [tender, setTender] = useState({
@@ -40,33 +43,47 @@ export default function CreateTender() {
     setTender({ ...tender, [e.target.name]: selectedFiles });
   };
 
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get current user and set clientId
+    const currentUser = userService.getCurrentUser();
+    if (currentUser && currentUser.role === 'CLIENT') {
+      setTender(prev => ({ ...prev, clientId: currentUser.id }));
+    } else {
+      // Redirect if not logged in as client
+      navigate('/login');
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Prepare the data for submission according to the required data model.
-    const submissionData = {
-      clientId: tender.clientId, // supply client id as needed
-      title: tender.title,
-      description: tender.description,
-      plan: tender.plan, // or process file references if needed
-      boq: tender.boq,   // or process file references if needed
-      budget: Number(tender.budget),
-      deadline: tender.deadline, // should be in ISODate string format, can adjust if necessary
-      status: tender.status,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      // Prepare the data for submission according to the required data model
+      const submissionData = {
+        clientId: tender.clientId,
+        title: tender.title,
+        description: tender.description,
+        plan: tender.plan, // or process file references if needed
+        boq: tender.boq,   // or process file references if needed
+        budget: Number(tender.budget),
+        deadline: tender.deadline,
+        status: "new", // Set initial status to new
+      };
 
-    const response = await fetch("/api/tenders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(submissionData),
-    });
-    if (response.ok) alert("Tender Created Successfully!");
+      await tenderService.createTender(submissionData);
+      alert("Tender Created Successfully!");
+      navigate('/client/tender'); // Redirect to tenders list
+    } catch (error) {
+      console.error("Error creating tender:", error);
+      alert("Failed to create tender. Please try again.");
+    }
   };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <ClientNavbar />
-    <div 
+    <div
       className={`flex-1 transition-all duration-300 ${
         isSidebarMinimized ? 'ml-20' : 'ml-80'
       }`}

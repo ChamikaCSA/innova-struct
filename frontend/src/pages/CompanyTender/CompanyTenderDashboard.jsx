@@ -3,50 +3,89 @@ import CompanyNavbar from '../../components/CompanyNavbar';
 import FilterSection from '../../components/companyTender/FilterSection';
 import TenderCard from '../../components/companyTender/TenderCard.jsx';
 import TenderChatbot from '../../components/companyTender/TenderChatbot.jsx';
-import { 
+import {
   Search, AlertCircle, MapPin, TrendingUp, FileText,
   HardHat, Building, Hammer, Clock,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TenderDetailModal from '../../components/companyTender/TenderDetailModal.jsx';
-const mockTenders = [
-  {
-    id: 1,
-    title: "Commercial Complex Development",
-    location: "Colombo",
-    priority: "hot",
-    daysLeft: 5,
-    budget: 500000,
-    bidsCount: 12,
-    category: "Commercial",
-    description: "Development of a modern commercial complex with parking facilities",
-    status: "open"
-  },{ id: 2, title: "Luxury Apartment Construction", location: "Kandy", priority: "medium", daysLeft: 12, budget: 750000, bidsCount: 8, category: "Residential", description: "Construction of a high-end apartment complex with modern amenities", status: "open" }, { id: 3, title: "Road Expansion Project", location: "Galle", priority: "hot", daysLeft: 3, budget: 1200000, bidsCount: 15, category: "Infrastructure", description: "Widening and resurfacing of the main road connecting the city center", status: "open" }, { id: 4, title: "Eco-Friendly Resort Development", location: "Ella", priority: "high", daysLeft: 10, budget: 900000, bidsCount: 10, category: "Hospitality", description: "Construction of a sustainable resort with renewable energy solutions", status: "open" }, { id: 5, title: "Shopping Mall Renovation", location: "Negombo", priority: "medium", daysLeft: 15, budget: 600000, bidsCount: 7, category: "Commercial", description: "Upgrading interiors, adding new stores, and improving accessibility", status: "open" }, { id: 6, title: "Industrial Warehouse Construction", location: "Kurunegala", priority: "high", daysLeft: 7, budget: 850000, bidsCount: 9, category: "Industrial", description: "Building a large warehouse with advanced storage facilities", status: "open" }, { id: 7, title: "Bridge Construction Over River", location: "Anuradhapura", priority: "hot", daysLeft: 6, budget: 1300000, bidsCount: 13, category: "Infrastructure", description: "Construction of a reinforced concrete bridge for better connectivity", status: "open" }, { id: 8, title: "Hospital Expansion Project", location: "Jaffna", priority: "medium", daysLeft: 20, budget: 950000, bidsCount: 6, category: "Healthcare", description: "Expansion of an existing hospital with new wards and ICU units", status: "open" }, { id: 9, title: "Smart Office Tower Development", location: "Battaramulla", priority: "high", daysLeft: 8, budget: 1100000, bidsCount: 11, category: "Commercial", description: "Building an office tower with smart technology integration", status: "open" }, { id: 10, title: "Luxury Villa Construction", location: "Bentota", priority: "hot", daysLeft: 4, budget: 450000, bidsCount: 14, category: "Residential", description: "Development of a private luxury villa with a swimming pool", status: "open" }
-  
-];
-
+import tenderService from '../../services/tenderService';
+import userService from '../../services/userService';
 const CompanyTenderDashboard = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-  const [tenders] = useState(mockTenders);
-  const [filteredTenders, setFilteredTenders] = useState(mockTenders);
+  const [tenders, setTenders] = useState([]);
+  const [filteredTenders, setFilteredTenders] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const [selectedTender, setSelectedTender] = useState(null);
-
-  // Stats calculation from mockTenders
-  const [stats] = useState({
-    totalTenders: mockTenders.length,
-    activeBids: mockTenders.filter(t => t.status === 'open').length,
-    urgentTenders: mockTenders.filter(t => t.priority === 'hot').length,
-    averageBudget: Math.round(mockTenders.reduce((acc, curr) => acc + curr.budget, 0) / mockTenders.length)
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({
+    totalTenders: 0,
+    activeBids: 0,
+    urgentTenders: 0,
+    averageBudget: 0
   });
+
+  // Fetch tenders from API
+  useEffect(() => {
+    const fetchTenders = async () => {
+      try {
+        const currentUser = userService.getCurrentUser();
+        if (!currentUser || currentUser.role !== 'COMPANY') {
+          navigate('/login');
+          return;
+        }
+
+        setLoading(true);
+        const data = await tenderService.getAllTenders();
+
+        // Add priority based on deadline proximity
+        const tendersWithPriority = data.map(tender => {
+          const deadlineDate = new Date(tender.deadline);
+          const today = new Date();
+          const daysLeft = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+
+          let priority = 'medium';
+          if (daysLeft <= 5) priority = 'hot';
+          else if (daysLeft <= 10) priority = 'high';
+
+          return {
+            ...tender,
+            priority,
+            daysLeft: daysLeft > 0 ? daysLeft : 0
+          };
+        });
+
+        setTenders(tendersWithPriority);
+        setFilteredTenders(tendersWithPriority);
+
+        // Calculate stats
+        setStats({
+          totalTenders: tendersWithPriority.length,
+          activeBids: tendersWithPriority.filter(t => t.status === 'new' || t.status === 'active').length,
+          urgentTenders: tendersWithPriority.filter(t => t.priority === 'hot').length,
+          averageBudget: tendersWithPriority.length > 0
+            ? Math.round(tendersWithPriority.reduce((acc, curr) => acc + curr.budget, 0) / tendersWithPriority.length)
+            : 0
+        });
+      } catch (err) {
+        console.error('Error fetching tenders:', err);
+        setError('Failed to load tenders. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenders();
+  }, [navigate]);
 
   // Sidebar state management
   useEffect(() => {
     const handleSidebarStateChange = (event) => {
       setIsSidebarMinimized(event.detail);
     };
-    
+
     window.addEventListener('sidebarStateChange', handleSidebarStateChange);
     return () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange);
@@ -65,28 +104,28 @@ const CompanyTenderDashboard = () => {
   // Filter handling
   const handleFilterChange = (filters) => {
     let filtered = [...tenders];
-    
+
     // Location filter (case-insensitive)
     if (filters.location) {
-      filtered = filtered.filter(tender => 
+      filtered = filtered.filter(tender =>
         tender.location.toLowerCase() === filters.location.toLowerCase()
       );
     }
-    
+
     // Category filter
     if (filters.category) {
-      filtered = filtered.filter(tender => 
+      filtered = filtered.filter(tender =>
         tender.category === filters.category
       );
     }
-  
+
     // Priority filter
     if (filters.priority) {
-      filtered = filtered.filter(tender => 
+      filtered = filtered.filter(tender =>
         tender.priority === filters.priority
       );
     }
-  
+
     // Budget filter
     if (filters.budget) {
       const [min, max] = filters.budget.split('-').map(Number);
@@ -95,29 +134,29 @@ const CompanyTenderDashboard = () => {
         return tender.budget >= min && tender.budget <= max;
       });
     }
-  
+
     // Days Left filter
     if (filters.daysLeft) {
       const [min, max] = filters.daysLeft;
-      filtered = filtered.filter(tender => 
+      filtered = filtered.filter(tender =>
         tender.daysLeft >= min && tender.daysLeft <= max
       );
     }
-    
+
     // Search query
     if (searchQuery) {
-      filtered = filtered.filter(tender => 
+      filtered = filtered.filter(tender =>
         tender.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tender.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
+
     setFilteredTenders(filtered);
   };
   // Search handling
-  
 
-  
+
+
 
 
   return (
@@ -186,7 +225,7 @@ const CompanyTenderDashboard = () => {
               {/* Filter Tenders - Primary Action */}
               <button
                 onClick={() => document.querySelector('input[type="text"]').focus()}
-                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-400 
+                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-400
                   text-white rounded-lg hover:from-yellow-600 hover:to-yellow-500 transition-all group"
               >
                 <Search className="w-5 h-5" />
@@ -199,8 +238,8 @@ const CompanyTenderDashboard = () => {
               {/* Active Bids - Secondary Action */}
               <button
                 onClick={() => navigate('/company/tender/bids')}
-                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-gray-50 to-gray-100 
-                  text-gray-700 rounded-lg hover:from-yellow-50 hover:to-yellow-100 
+                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-gray-50 to-gray-100
+                  text-gray-700 rounded-lg hover:from-yellow-50 hover:to-yellow-100
                   hover:text-yellow-700 border border-gray-200 transition-all group"
               >
                 <FileText className="w-5 h-5 text-yellow-600" />
@@ -214,8 +253,8 @@ const CompanyTenderDashboard = () => {
 
               <button
                 onClick={() => navigate('/company/tender/analytics')}
-                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-gray-50 to-gray-100 
-                  text-gray-700 rounded-lg hover:from-yellow-50 hover:to-yellow-100 
+                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-gray-50 to-gray-100
+                  text-gray-700 rounded-lg hover:from-yellow-50 hover:to-yellow-100
                   hover:text-yellow-700 border border-gray-200 transition-all group"
               >
                 <TrendingUp className="w-5 h-5 text-yellow-600" />
@@ -225,11 +264,11 @@ const CompanyTenderDashboard = () => {
                     View performance metrics
                   </div>
                 </div>
-              </button> 
+              </button>
               <button
                 onClick={() => navigate('/company/tender/heatmap')}
-                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-gray-50 to-gray-100 
-                  text-gray-700 rounded-lg hover:from-yellow-50 hover:to-yellow-100 
+                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-gray-50 to-gray-100
+                  text-gray-700 rounded-lg hover:from-yellow-50 hover:to-yellow-100
                   hover:text-yellow-700 border border-gray-200 transition-all group"
               >
                 <MapPin className="w-5 h-5 text-yellow-600" />
@@ -281,9 +320,9 @@ const CompanyTenderDashboard = () => {
           {filteredTenders.length > 0 ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTenders.map(tender => (
-          <TenderCard 
-            key={tender.id} 
-            tender={tender} 
+          <TenderCard
+            key={tender.id}
+            tender={tender}
             onTenderClick={handleTenderClick}
           />
         ))}

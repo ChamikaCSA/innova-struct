@@ -6,6 +6,11 @@ import {
 } from "react-router-dom";
 import Home from "./pages/client-dashboard/Home";
 import Login from "./pages/Authentication/Login";
+import Register from "./pages/Authentication/Register";
+import ChooseLogin from "./pages/Authentication/ChooseLogin";
+import ChooseRegister from "./pages/Authentication/ChooseRegister";
+import ClientRegister from "./pages/Authentication/ClientRegister";
+import CompanyRegister from "./pages/Authentication/CompanyRegister";
 import CompanyHome from "./pages/company-dashboard/CompanyHome";
 import ClientInsights from "./pages/insights/ClientInsights";
 import CompanyInsights from "./pages/insights/CompanyInsights";
@@ -30,10 +35,14 @@ const App = () => {
     <div>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<ChooseLogin />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/choose-register" element={<ChooseRegister />} />
 
           <Route path="/client">
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<ClientRegister />} />
             <Route path="home" element={<Home />} />
             <Route path="companies" element={<RegisteredCompaniesPage />} />
             <Route path="companies/:id" element={<CompanyProfilePage />} />
@@ -42,10 +51,12 @@ const App = () => {
             <Route path="tender/create" element={<CreateTender />} />
             <Route path="insights" element={<ClientInsights />} />
             <Route path="contacts" element={<ContactsClient />} />
-           
+
           </Route>
 
           <Route path="/company">
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<CompanyRegister />} />
             <Route path="home" element={<CompanyHome />} />
             <Route path="portfolio" element={<CompanyPortfolio />} />
             <Route path="settings" element={<SettingsPageCompany />} />
