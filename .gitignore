@@ -1,0 +1,48 @@
+# Ignore MacOS system files
+.DS_Store
+
+# Ignore Java build files
+*.class
+*.jar
+*.war
+*.ear
+
+# Ignore Maven build directory
+target/
+
+# Ignore IntelliJ IDEA project files
+*.iml
+.idea/
+
+# Ignore Eclipse project files
+.project
+.classpath
+.settings/
+
+# Ignore logs
+*.log
+
+# Ignore temporary files
+*.tmp
+*.swp
+
+# Ignore node modules for frontend
+frontend/node_modules/
+
+# Ignore environment files
+frontend/.env
+
+# Ignore build output for frontend
+frontend/dist/
+
+# Ignore Vite cache
+frontend/.vite/
+
+# Ignore npm debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore package lock files
+frontend/package-lock.json
+frontend/yarn.lock
