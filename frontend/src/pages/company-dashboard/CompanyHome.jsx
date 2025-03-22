@@ -1,21 +1,21 @@
 // src/pages/company-dashboard/Home.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Building, FileText, Settings, Users, 
-  TrendingUp, Calendar,  
-  Clock, CheckCircle, AlertTriangle 
+import {
+  Building, FileText, Settings, Users,
+  TrendingUp, Calendar,
+  Clock, CheckCircle, AlertTriangle
 } from 'lucide-react';
 import CompanyNavbar from '../../components/CompanyNavbar';
 
 const CompanyHome = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-  
+
   useEffect(() => {
     const handleSidebarStateChange = (event) => {
       setIsSidebarMinimized(event.detail);
     };
-    
+
     window.addEventListener('sidebarStateChange', handleSidebarStateChange);
     return () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange);
@@ -143,7 +143,7 @@ const CompanyHome = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       <CompanyNavbar />
-      <div 
+      <div
         className={`flex-1 transition-all duration-300 ${
           isSidebarMinimized ? 'ml-20' : 'ml-80'
         }`}
@@ -157,7 +157,7 @@ const CompanyHome = () => {
               </h1>
               <p className="text-gray-600 mt-2">Company Dashboard Overview</p>
             </div>
-            
+
             {/* Stats Overview Section */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {statCards.map((stat, idx) => (
@@ -174,14 +174,14 @@ const CompanyHome = () => {
                 </div>
               ))}
             </div>
-  
+
             <div className="space-y-6">
               {/* Main Cards */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {mainCards.map((card, index) => (
                   <div key={index} className="relative group">
-                  
-                  <Link 
+
+                  <Link
   to="/company/insights"
   className={`${card.color} transform hover:scale-102 transition-all duration-200 p-6 sm:p-8 rounded-xl shadow-lg text-white h-full block`}
 >
@@ -214,7 +214,7 @@ const CompanyHome = () => {
                   </div>
                 ))}
               </div>
-  
+
               {/* Upcoming Deadlines */}
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="border-b border-gray-100 p-5 flex justify-between items-center">
@@ -243,8 +243,8 @@ const CompanyHome = () => {
                           <div className="flex items-center">
                             <span className="text-sm font-medium text-gray-700 mr-3">{deadline.completion}%</span>
                             <div className="w-48 bg-gray-200 rounded-full h-2.5">
-                              <div 
-                                className="bg-yellow-500 h-2.5 rounded-full" 
+                              <div
+                                className="bg-yellow-500 h-2.5 rounded-full"
                                 style={{ width: `${deadline.completion}%` }}
                               ></div>
                             </div>
@@ -255,12 +255,12 @@ const CompanyHome = () => {
                   ))}
                 </ul>
               </div>
-  
+
               {/* Quick Actions Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                 {quickActionTiles.map((tile, index) => (
-                  <Link 
-                    key={index} 
+                  <Link
+                    key={index}
                     to={tile.link}
                     className={`${tile.color} transform hover:scale-102 transition-all duration-200 p-4 sm:p-6 rounded-xl shadow-md text-white`}
                   >
@@ -276,7 +276,7 @@ const CompanyHome = () => {
                   </Link>
                 ))}
               </div>
-  
+
               {/* Recent Activity */}
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="border-b border-gray-100">
@@ -297,9 +297,9 @@ const CompanyHome = () => {
                     </li>
                   ))}
                 </ul>
-                
+
               </div>
-  
+
               {/* Switch to Client Dashboard */}
               <div className="bg-white rounded-xl p-6 shadow-md">
                 <div className="flex flex-col items-center sm:flex-row sm:justify-between">
@@ -307,8 +307,8 @@ const CompanyHome = () => {
                     <h2 className="text-xl font-bold text-gray-800">Client Account</h2>
                     <p className="text-gray-600">Switch to your Client dashboard</p>
                   </div>
-                  <Link 
-                    to="/client/home" 
+                  <Link
+                    to="/client/home"
                     className="mt-4 sm:mt-0 bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg shadow-md transition-colors"
                   >
                     Switch to Client View

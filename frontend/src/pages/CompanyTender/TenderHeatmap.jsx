@@ -1,130 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import CompanyNavbar from '../../components/CompanyNavbar';
 import TenderMap from '../../components/companyTender/TenderMap.jsx';
+import tenderService from '../../services/tenderService';
 import { MapPin, Filter, Calendar, TrendingUp, Users, DollarSign } from 'lucide-react';
 
-const mockLocations = [
-  {
-    id: 1,
-    district: "Colombo",
-    coordinates: { lat: 6.9271, lng: 79.8612 },
-    tenderCount: 15,
-    activeTenders: [
-      { id: 1, title: "Commercial Complex", budget: 500000 },
-      { id: 2, title: "Office Building", budget: 750000 }
-    ],
-    totalValue: 1250000
-  },
-  {
-    id: 2,
-    district: "Kandy",
-    coordinates: { lat: 7.2906, lng: 80.6337 },
-    tenderCount: 8,
-    activeTenders: [
-      { id: 3, title: "Hotel Development", budget: 1200000 }
-    ],
-    totalValue: 1200000
-  },
-  {
-    id: 3,
-    district: "Galle",
-    coordinates: { lat: 6.0535, lng: 80.2210 },
-    tenderCount: 5,
-    activeTenders: [
-      { id: 4, title: "Resort Construction", budget: 900000 }
-    ],
-    totalValue: 900000
-  },
-  {
-    id: 4,
-    district: "Negombo",
-    coordinates: { lat: 7.2094, lng: 79.8345 },
-    tenderCount: 10,
-    activeTenders: [
-      { id: 5, title: "Shopping Mall Renovation", budget: 600000 },
-      { id: 6, title: "Luxury Apartment Complex", budget: 850000 }
-    ],
-    totalValue: 1450000
-  },
-  {
-    id: 5,
-    district: "Anuradhapura",
-    coordinates: { lat: 8.3114, lng: 80.4037 },
-    tenderCount: 6,
-    activeTenders: [
-      { id: 7, title: "Bridge Construction", budget: 1300000 }
-    ],
-    totalValue: 1300000
-  },
-  {
-    id: 6,
-    district: "Jaffna",
-    coordinates: { lat: 9.6615, lng: 80.0255 },
-    tenderCount: 4,
-    activeTenders: [
-      { id: 8, title: "Hospital Expansion", budget: 950000 }
-    ],
-    totalValue: 950000
-  },
-  {
-    id: 7,
-    district: "Battaramulla",
-    coordinates: { lat: 6.9270, lng: 79.9092 },
-    tenderCount: 7,
-    activeTenders: [
-      { id: 9, title: "Smart Office Tower", budget: 1100000 }
-    ],
-    totalValue: 1100000
-  },
-  {
-    id: 8,
-    district: "Bentota",
-    coordinates: { lat: 6.4253, lng: 80.0022 },
-    tenderCount: 9,
-    activeTenders: [
-      { id: 10, title: "Luxury Villa Construction", budget: 700000 },
-      { id: 11, title: "Beachfront Resort", budget: 1400000 }
-    ],
-    totalValue: 2100000
-  },
-  {
-    id: 9,
-    district: "Kurunegala",
-    coordinates: { lat: 7.4863, lng: 80.3647 },
-    tenderCount: 5,
-    activeTenders: [
-      { id: 12, title: "Industrial Warehouse", budget: 850000 }
-    ],
-    totalValue: 850000
-  },
-  {
-    id: 10,
-    district: "Ella",
-    coordinates: { lat: 6.8750, lng: 81.0467 },
-    tenderCount: 6,
-    activeTenders: [
-      { id: 13, title: "Eco-Friendly Resort", budget: 900000 }
-    ],
-    totalValue: 900000
-  }
-]
+
 
 
 const TenderHeatmap = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [timeframe, setTimeframe] = useState('month');
-  const [locations] = useState(mockLocations);
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleSidebarStateChange = (event) => {
       setIsSidebarMinimized(event.detail);
     };
-    
+
     window.addEventListener('sidebarStateChange', handleSidebarStateChange);
     return () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange);
     };
+  }, []);
+
+  // Fetch location data from API
+  useEffect(() => {
+    const fetchLocations = async () => {
+      setLoading(true);
+      try {
+        const data = await tenderService.getTenderLocations();
+        setLocations(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching tender locations:', err);
+        setError('Failed to load location data. Please try again later.');
+        // Fallback to empty array if API fails
+        setLocations([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLocations();
   }, []);
 
   const selectedLocation = React.useMemo(() => {
@@ -154,7 +74,7 @@ const TenderHeatmap = () => {
               <h1 className="text-3xl font-extrabold text-gray-800 mb-2">Tender Heatmap</h1>
               <p className="text-gray-600">Visualize tender distribution across Sri Lanka</p>
             </div>
-            
+
             {/* Decorative elements */}
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-yellow-200 rounded-full opacity-20"></div>
             <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-yellow-300 rounded-full opacity-20"></div>
@@ -215,9 +135,9 @@ const TenderHeatmap = () => {
           {/* Map and Details Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Map Container */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden" 
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden"
                style={{ height: '600px' }}>
-            <TenderMap 
+            <TenderMap
               locations={locations}
               selectedDistrict={selectedDistrict}
               onDistrictSelect={handleDistrictSelect}
@@ -233,7 +153,7 @@ const TenderHeatmap = () => {
                       <MapPin className="w-5 h-5 text-yellow-600" />
                       {selectedLocation.district} Overview
                     </h3>
-                    
+
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3">

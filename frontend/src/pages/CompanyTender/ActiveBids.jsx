@@ -1,66 +1,59 @@
 import  { useState, useEffect } from 'react';
 import CompanyNavbar from '../../components/CompanyNavbar';
-import { 
+import bidService from '../../services/bidService';
+import {
   Clock, TrendingUp, AlertTriangle, CheckCircle, DollarSign,
   FileText, Users, ArrowUpRight, Sparkles, Download, Search,
    SortAsc, SortDesc
 } from 'lucide-react';
 
-const mockBids = [
-    {
-      id: 1,
-      tenderTitle: "Commercial Complex Development",
-      clientName: "ABC Developers",
-      bidAmount: 480000,
-      originalBudget: 500000,
-      submissionDate: "2024-03-01",
-      deadline: "2024-03-15",
-      status: "under-review",
-      competitorCount: 8,
-      bidStrength: "strong",
-      documents: [
-        { name: "Technical Proposal.pdf", size: "2.4 MB" },
-        { name: "Financial Bid.pdf", size: "1.1 MB" }
-      ]
-    },
-    {
-      id: 2,
-      tenderTitle: "Hospital Renovation Project",
-      clientName: "Healthcare Solutions",
-      bidAmount: 750000,
-      originalBudget: 800000,
-      submissionDate: "2024-02-15",
-      deadline: "2024-04-01",
-      status: "pending",
-      competitorCount: 5,
-      bidStrength: "moderate",
-      documents: [
-        { name: "Technical Specs.pdf", size: "3.1 MB" },
-        { name: "Cost Analysis.pdf", size: "1.8 MB" }
-      ]
-    },
-    // Add more mock bids as needed
-  ];
-  
+
+
 
 const ActiveBids = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-  const [bids, setBids] = useState(mockBids);
+  const [bids, setBids] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ field: 'submissionDate', direction: 'desc' });
-  const [ setSelectedBid] = useState(null);
+  const [setSelectedBid] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Mock company ID - in a real app, this would come from auth context
+  const companyId = "company123";
 
   useEffect(() => {
     const handleSidebarStateChange = (event) => {
       setIsSidebarMinimized(event.detail);
     };
-    
+
     window.addEventListener('sidebarStateChange', handleSidebarStateChange);
     return () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange);
     };
   }, []);
+
+  // Fetch bids data from API
+  useEffect(() => {
+    const fetchBids = async () => {
+      setLoading(true);
+      try {
+        const data = await bidService.getBidsByCompanyId(companyId);
+        setBids(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching bids:', err);
+        setError('Failed to load bids. Please try again later.');
+        // Fallback to empty array if API fails
+        setBids([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBids();
+  }, [companyId]);
 
   const handleSort = (field) => {
     const newDirection = sortConfig.field === field && sortConfig.direction === 'asc' ? 'desc' : 'asc';
@@ -70,7 +63,7 @@ const ActiveBids = () => {
       if (field === 'bidAmount' || field === 'competitorCount') {
         return newDirection === 'asc' ? a[field] - b[field] : b[field] - a[field];
       }
-      return newDirection === 'asc' 
+      return newDirection === 'asc'
         ? a[field].localeCompare(b[field])
         : b[field].localeCompare(a[field]);
     });
@@ -80,19 +73,37 @@ const ActiveBids = () => {
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    const filtered = mockBids.filter(bid => 
-      bid.tenderTitle.toLowerCase().includes(query.toLowerCase()) ||
-      bid.clientName.toLowerCase().includes(query.toLowerCase())
-    );
-    setBids(filtered);
+    if (bids.length > 0) {
+      const filtered = bids.filter(bid =>
+        bid.tenderTitle.toLowerCase().includes(query.toLowerCase()) ||
+        bid.clientName.toLowerCase().includes(query.toLowerCase())
+      );
+      setBids(filtered);
+    }
   };
 
-  const handleStatusChange = (status) => {
+  const handleStatusChange = async (status) => {
     setSelectedStatus(status);
-    const filtered = status === 'all' 
-      ? mockBids 
-      : mockBids.filter(bid => bid.status === status);
-    setBids(filtered);
+    setLoading(true);
+
+    try {
+      let filteredBids;
+      if (status === 'all') {
+        filteredBids = await bidService.getBidsByCompanyId(companyId);
+      } else {
+        filteredBids = await bidService.getBidsByStatus(status);
+        // Further filter by company ID if the API doesn't support filtering by both
+        filteredBids = filteredBids.filter(bid => bid.companyId === companyId);
+      }
+
+      setBids(filteredBids);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching bids by status:', err);
+      setError('Failed to filter bids. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getBidStatusInfo = (status) => {
@@ -134,7 +145,7 @@ const ActiveBids = () => {
               <h1 className="text-3xl font-extrabold text-gray-800 mb-2">Active Bids</h1>
               <p className="text-gray-600">Track and manage your tender submissions</p>
             </div>
-            
+
             {/* Search Bar */}
             <div className="mt-6">
               <div className="relative">
@@ -199,7 +210,7 @@ const ActiveBids = () => {
             <div className="p-6 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-xl font-semibold text-gray-800">Recent Bids</h2>
-                
+
                 {/* Sort Controls */}
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
@@ -252,7 +263,7 @@ const ActiveBids = () => {
             </h3>
             <p className="text-sm text-gray-500">Client: {bid.clientName}</p>
           </div>
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
             bg-${statusInfo.color}-100 text-${statusInfo.color}-800`}
           >
             {statusInfo.icon}
@@ -299,21 +310,21 @@ const ActiveBids = () => {
             {bid.documents.map((doc, index) => (
               <button
                 key={index}
-                className="flex items-center px-3 py-1.5 text-sm text-gray-600 bg-gray-100 
+                className="flex items-center px-3 py-1.5 text-sm text-gray-600 bg-gray-100
                   rounded-lg hover:bg-gray-200 transition-colors"
               >
                 <Download className="w-4 h-4 mr-1" />
                 {doc.name}
               </button>
             ))}
-            <button 
+            <button
               onClick={() => setSelectedBid(bid)}
-              className="inline-flex items-center px-4 py-2 bg-yellow-500 text-white 
-                rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium 
+              className="inline-flex items-center px-4 py-2 bg-yellow-500 text-white
+                rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium
                 group ml-2"
             >
               View Details
-              <ArrowUpRight className="w-4 h-4 ml-2 transform group-hover:translate-x-0.5 
+              <ArrowUpRight className="w-4 h-4 ml-2 transform group-hover:translate-x-0.5
                 group-hover:-translate-y-0.5 transition-transform" />
             </button>
           </div>
@@ -329,7 +340,7 @@ const ActiveBids = () => {
           </div>
         </div>
       </div>
-    
+
   );
 };
 

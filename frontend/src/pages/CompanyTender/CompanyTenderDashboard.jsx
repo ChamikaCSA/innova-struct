@@ -33,7 +33,7 @@ const CompanyTenderDashboard = () => {
       try {
         const currentUser = userService.getCurrentUser();
         if (!currentUser || currentUser.role !== 'COMPANY') {
-          navigate('/login');
+          navigate('/company/login');
           return;
         }
 

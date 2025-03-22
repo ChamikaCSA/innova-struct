@@ -1,12 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building, Star, MapPin, Activity, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { mockCompanies } from '../../pages/companies/mockData';
+import companyService from '../../services/companyService';
 
 const ContractorsList = () => {
-  const topContractors = mockCompanies
-    .sort((a, b) => b.rating - a.rating)
-    .slice(0, 5);
+  const [topContractors, setTopContractors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchTopContractors = async () => {
+      try {
+        setLoading(true);
+        const companies = await companyService.getAllCompanies();
+        const sorted = companies
+          .sort((a, b) => b.rating - a.rating)
+          .slice(0, 5);
+        setTopContractors(sorted);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching top contractors:', err);
+        setError('Failed to load top contractors');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopContractors();
+  }, []);
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -22,16 +43,16 @@ const ContractorsList = () => {
 
       <div className="divide-y divide-gray-100">
         {topContractors.map((contractor) => (
-          <Link 
-            key={contractor.id} 
+          <Link
+            key={contractor.id}
             to={`/client/company/${contractor.id}`}
             className="block hover:bg-gray-50 transition-colors"
           >
             <div className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                  <img 
-                    src={contractor.profileIcon} 
+                  <img
+                    src={contractor.profileIcon}
                     alt={contractor.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -53,7 +74,7 @@ const ContractorsList = () => {
                       <span className="font-semibold">{contractor.rating.toFixed(1)}</span>
                     </div>
                   </div>
-                  
+
                   <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
                     <div className="flex items-center gap-1">
                       <Activity className="w-4 h-4" />
@@ -72,8 +93,8 @@ const ContractorsList = () => {
       </div>
 
       <div className="p-4 bg-gray-50 border-t border-gray-100">
-        <Link 
-          to="/client/companies" 
+        <Link
+          to="/client/companies"
           className="text-yellow-600 hover:text-yellow-700 text-sm font-medium flex items-center justify-center"
         >
           View all contractors

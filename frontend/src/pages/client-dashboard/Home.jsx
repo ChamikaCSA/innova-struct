@@ -6,12 +6,12 @@ import ClientNavbar from '../../components/ClientNavbar';
 
 const Home = () => {
     const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-  
+
   useEffect(() => {
     const handleSidebarStateChange = (event) => {
       setIsSidebarMinimized(event.detail);
     };
-    
+
     window.addEventListener('sidebarStateChange', handleSidebarStateChange);
     return () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange);
@@ -96,7 +96,7 @@ const Home = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       <ClientNavbar />
-      <div 
+      <div
         className={`flex-1 transition-all duration-300 ${
           isSidebarMinimized ? 'ml-20' : 'ml-80'
         }`}
@@ -109,7 +109,7 @@ const Home = () => {
             </h1>
             <p className="text-gray-600 mt-2">Let build your home!</p>
           </div>
-          
+
           {/* Stats Overview Section */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {statCards.map((stat, idx) => (
@@ -126,14 +126,14 @@ const Home = () => {
               </div>
             ))}
           </div>
-  
+
           {/* Main Content Area */}
           <div className="space-y-8">
             {/* Main Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {mainCards.map((card, index) => (
                 <div key={index} className="relative group">
-                  <Link 
+                  <Link
                     to={card.link}
                     className={`${card.color} transform hover:scale-102 transition-all duration-200 p-6 sm:p-8 rounded-xl shadow-lg text-white h-full block`}
                   >
@@ -170,17 +170,17 @@ const Home = () => {
                 </div>
               ))}
             </div>
-  
+
             {/* Ads Section */}
             <div className="bg-white rounded-xl overflow-hidden shadow-md">
               <AdsSlideshow />
             </div>
-  
+
             {/* Secondary Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {secondaryCards.map((card, index) => (
-                <Link 
-                  key={index} 
+                <Link
+                  key={index}
                   to={card.link}
                   className={`${card.color} transform hover:scale-102 transition-all duration-200 p-4 sm:p-6 rounded-xl shadow-md text-white`}
                 >
@@ -195,10 +195,10 @@ const Home = () => {
                   </div>
                 </Link>
               ))}
-  
-              
+
+
             </div>
-  
+
             {/* Recent Activity */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="border-b border-gray-100">
@@ -219,9 +219,9 @@ const Home = () => {
                   </li>
                 ))}
               </ul>
-              
+
             </div>
-  
+
             {/* Company Switch Section */}
             <div className="bg-white rounded-xl p-6 shadow-md">
               <div className="flex flex-col items-center sm:flex-row sm:justify-between">
@@ -229,8 +229,8 @@ const Home = () => {
                   <h2 className="text-xl font-bold text-gray-800">Company Account</h2>
                   <p className="text-gray-600">Switch to your company dashboard</p>
                 </div>
-                <Link 
-                  to="/company/home" 
+                <Link
+                  to="/company/home"
                   className="mt-4 sm:mt-0 bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg shadow-md transition-colors"
                 >
                   Switch to Company View

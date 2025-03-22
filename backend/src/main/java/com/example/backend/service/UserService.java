@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -18,6 +19,12 @@ public class UserService {
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    public List<User> getUsersByRole(String role) {
+        return userRepository.findAll().stream()
+                .filter(user -> role.equals(user.getRole()))
+                .collect(Collectors.toList());
     }
 
     public Optional<User> getUserById(String id) {

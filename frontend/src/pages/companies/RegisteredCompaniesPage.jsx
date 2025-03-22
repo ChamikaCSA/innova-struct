@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { mockCompanies } from './mockData';
 import ClientNavbar from '../../components/ClientNavbar';
 import Filter from '../../components/CompanyProfile/Filter';
 import { Star } from 'lucide-react';
+import companyService from '../../services/companyService';
+import userService from '../../services/userService';
 
 const RegisteredCompaniesPage = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-  const [filteredCompanies, setFilteredCompanies] = useState(mockCompanies);
-  const [isLoading, setIsLoading] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [filteredCompanies, setFilteredCompanies] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -22,23 +25,42 @@ const RegisteredCompaniesPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        setIsLoading(true);
+        const data = await companyService.getAllCompanies();
+        setCompanies(data);
+        setFilteredCompanies(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching companies:', err);
+        setError('Failed to load companies data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCompanies();
+  }, []);
+
   const handleFilterChange = (filters) => {
     setIsLoading(true);
     try {
-      let results = mockCompanies;
+      let results = [...companies];
 
       if (filters.type) {
         results = results.filter(company => company.type === filters.type);
       }
 
       if (filters.location) {
-        results = results.filter(company => 
+        results = results.filter(company =>
           company.location.toLowerCase().includes(filters.location.toLowerCase())
         );
       }
 
       if (filters.rating) {
-        results = results.filter(company => 
+        results = results.filter(company =>
           company.rating >= parseFloat(filters.rating)
         );
       }
@@ -75,10 +97,10 @@ const RegisteredCompaniesPage = () => {
   const handleSearch = (event) => {
     const query = event.target.value.toLowerCase();
     setSearchQuery(query);
-    
-    let results = mockCompanies;
+
+    let results = [...companies];
     if (query) {
-      results = results.filter(company => 
+      results = results.filter(company =>
         company.name.toLowerCase().includes(query)
       );
     }
@@ -90,7 +112,7 @@ const RegisteredCompaniesPage = () => {
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((index) => {
           const difference = rating - index + 1;
-          
+
           if (difference >= 1) {
             // Full star
             return (
@@ -129,12 +151,12 @@ const RegisteredCompaniesPage = () => {
     );
   };
 
-            
+
 
   return (
     <div className="flex">
       <ClientNavbar />
-      <div 
+      <div
         className={`flex-1 transition-all duration-300 ${
           isSidebarMinimized ? 'ml-20' : 'ml-80'
         }`}
@@ -153,16 +175,16 @@ const RegisteredCompaniesPage = () => {
                 className="w-full p-4 pl-12 pr-4 text-gray-900 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
               />
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <svg 
+                <svg
                   className="w-5 h-5 text-gray-500"
-                  fill="none" 
-                  stroke="currentColor" 
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth="2" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
@@ -170,8 +192,8 @@ const RegisteredCompaniesPage = () => {
             </div>
           </div>
 
-          
-          
+
+
           <Filter onFilterChange={handleFilterChange} />
 
           {isLoading ? (
@@ -188,10 +210,10 @@ const RegisteredCompaniesPage = () => {
                 <Link to={`/client/companies/${company.id}`} key={company.id} className="block h-full">
                   <div className="card bg-base-100 shadow-xl h-full hover:shadow-2xl transition-shadow">
                     <figure className="h-48 w-full">
-                      <img 
-                        src={company.coverImage} 
-                        alt={company.name} 
-                        className="w-full h-full object-cover" 
+                      <img
+                        src={company.coverImage}
+                        alt={company.name}
+                        className="w-full h-full object-cover"
                       />
                     </figure>
                     <div className="card-body flex flex-col justify-between p-6">

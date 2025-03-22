@@ -52,7 +52,7 @@ export default function CreateTender() {
       setTender(prev => ({ ...prev, clientId: currentUser.id }));
     } else {
       // Redirect if not logged in as client
-      navigate('/login');
+      navigate('/client/login');
     }
   }, [navigate]);
 

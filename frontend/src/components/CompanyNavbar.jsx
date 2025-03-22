@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Home,
   Building,
-  
+
   FileText,
   Settings,
   LogOut,
@@ -24,18 +24,18 @@ const NavItem = ({ href, icon, text, isMinimized }) => {
       <Link
         to={href}
         className={`btn ${isMinimized ? 'btn-square' : 'btn-wide'} border-none justify-start shadow-none transition-colors ${
-          isActive 
-            ? 'bg-white' 
+          isActive
+            ? 'bg-white'
             : 'bg-transparent hover:bg-white/90 group'
         }`}
       >
         <div className={`flex items-center gap-3 ${
-          isActive 
-            ? 'text-yellow-500' 
+          isActive
+            ? 'text-yellow-500'
             : 'text-white group-hover:text-yellow-500'
         }`}>
-          {React.cloneElement(icon, { 
-            className: `w-5 h-5 ${isActive ? 'text-yellow-500' : ''}` 
+          {React.cloneElement(icon, {
+            className: `w-5 h-5 ${isActive ? 'text-yellow-500' : ''}`
           })}
           {!isMinimized && <span>{text}</span>}
         </div>
@@ -65,10 +65,10 @@ function CompanyNavbar() {
     <div className={`fixed h-screen bg-yellow-400 text-white shadow-lg flex flex-col transition-all duration-300 z-50 ${isMinimized ? 'w-20' : 'w-80'}`}>
       <div className="px-6 py-4 border-b border-yellow-300 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <img src="/assets/Logo.png" alt="Logo" className="w-9 h-10.5 -translate-y-0.5" /> 
+          <img src="/assets/Logo.png" alt="Logo" className="w-9 h-10.5 -translate-y-0.5" />
           {!isMinimized && <h2 className="text-2xl font-bold">AppName</h2>}
         </div>
-        <button 
+        <button
           onClick={toggleMinimize}
           className="p-2 hover:bg-white hover:text-yellow-400 rounded-full transition-colors"
           aria-label={isMinimized ? "Expand sidebar" : "Minimize sidebar"}
@@ -93,7 +93,7 @@ function CompanyNavbar() {
           </div>
         </div>
       )}
-        
+
       <ul className="flex flex-col p-4 space-y-4 flex-grow">
         <NavItem href="/company/home" icon={<Home />} text="Home" isMinimized={isMinimized} />
         <NavItem href="/company/portfolio" icon={<Building />} text="Portfolio" isMinimized={isMinimized} />
@@ -103,8 +103,8 @@ function CompanyNavbar() {
       </ul>
 
       <div className="p-4 mt-auto border-t border-yellow-300">
-        <Link 
-          to="/logout" 
+        <Link
+          to="/logout"
           className={`btn ${isMinimized ? 'btn-square' : 'btn-wide'} bg-white text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center justify-center gap-3 transition-colors`}
         >
           <LogOut className="w-5 h-5" />

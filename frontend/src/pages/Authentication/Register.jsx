@@ -57,10 +57,14 @@ function Register() {
       const { confirmPassword, ...registrationData } = userData;
 
       // Register user
-      await userService.register(registrationData);
+      const response = await userService.register(registrationData);
 
-      // Redirect to login page after successful registration
-      navigate("/login");
+      // Navigate based on user role
+      if (userData.role === "CLIENT") {
+        navigate("/client/home");
+      } else if (userData.role === "COMPANY") {
+        navigate("/company/home");
+      }
     } catch (err) {
       if (err.response && err.response.status === 400) {
         setError("Email already exists. Please use a different email.");

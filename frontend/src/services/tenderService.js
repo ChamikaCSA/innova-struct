@@ -10,6 +10,15 @@ const tenderService = {
     }
   },
 
+  getTenderLocations: async () => {
+    try {
+      const response = await api.get('/tenders/locations');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   getTenderById: async (id) => {
     try {
       const response = await api.get(`/tenders/${id}`);

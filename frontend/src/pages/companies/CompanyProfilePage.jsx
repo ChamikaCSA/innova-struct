@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { mockCompanies } from './mockData';
 import CompanyProfile from '../../components/CompanyProfile/CompanyProfile';
 import ClientNavbar from '../../components/ClientNavbar';
+import companyService from '../../services/companyService';
 
 const CompanyProfilePage = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { id } = useParams();
-  const companyId = parseInt(id, 10);
-  const company = mockCompanies.find(c => c.id === companyId);
 
   useEffect(() => {
     const handleSidebarStateChange = (event) => {
@@ -21,14 +22,49 @@ const CompanyProfilePage = () => {
     };
   }, []);
 
-  if (!company) {
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        setLoading(true);
+        const data = await companyService.getCompanyById(id);
+        setCompany(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching company:', err);
+        setError('Failed to load company data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchCompany();
+    }
+  }, [id]);
+
+  if (loading) {
     return (
       <div className="flex">
         <ClientNavbar />
         <div className={`flex-1 transition-all duration-300 ${
           isSidebarMinimized ? 'ml-20' : 'ml-80'
         } p-4`}>
-          <div>Company not found.</div>
+          <div className="flex justify-center items-center h-64">
+            <div className="loading loading-spinner loading-lg text-yellow-400"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !company) {
+    return (
+      <div className="flex">
+        <ClientNavbar />
+        <div className={`flex-1 transition-all duration-300 ${
+          isSidebarMinimized ? 'ml-20' : 'ml-80'
+        } p-4`}>
+          <div>{error || 'Company not found.'}</div>
         </div>
       </div>
     );
