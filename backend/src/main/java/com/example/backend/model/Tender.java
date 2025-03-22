@@ -3,6 +3,7 @@ package com.example.backend.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.List;
+import java.util.ArrayList;
 
 @Document(collection = "tenders")
 public class Tender {
@@ -17,9 +18,10 @@ public class Tender {
     private Double lowestBid;
     private String createdAt;
     private String clientId; // Reference to the user who created the tender
-    private List<Bid> bids;
+    private List<String> bidIds; // Store bid IDs instead of full bid objects
 
     public Tender() {
+        this.bidIds = new ArrayList<>();
     }
 
     public String getId() {
@@ -102,11 +104,11 @@ public class Tender {
         this.clientId = clientId;
     }
 
-    public List<Bid> getBids() {
-        return bids;
+    public List<String> getBidIds() {
+        return bidIds;
     }
 
-    public void setBids(List<Bid> bids) {
-        this.bids = bids;
+    public void setBidIds(List<String> bidIds) {
+        this.bidIds = bidIds;
     }
 }

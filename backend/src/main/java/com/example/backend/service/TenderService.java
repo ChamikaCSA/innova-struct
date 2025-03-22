@@ -2,20 +2,26 @@ package com.example.backend.service;
 
 import com.example.backend.model.Bid;
 import com.example.backend.model.Tender;
+import com.example.backend.repository.BidRepository;
 import com.example.backend.repository.TenderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TenderService {
 
     @Autowired
     private TenderRepository tenderRepository;
+
+    @Autowired
+    private BidRepository bidRepository;
 
     public List<Tender> getAllTenders() {
         return tenderRepository.findAll();
@@ -34,7 +40,21 @@ public class TenderService {
     }
 
     public List<Tender> getTendersByCompanyBids(String companyId) {
-        return tenderRepository.findByBidsCompanyId(companyId);
+        // First, find all bids by the company
+        List<Bid> companyBids = bidRepository.findByCompanyId(companyId);
+
+        // Extract bid IDs
+        List<String> bidIds = companyBids.stream()
+                .map(Bid::getId)
+                .collect(Collectors.toList());
+
+        // If no bids found, return empty list
+        if (bidIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Find tenders containing any of these bid IDs
+        return tenderRepository.findByBidIdsIn(bidIds);
     }
 
     public Tender createTender(Tender tender) {
@@ -60,12 +80,17 @@ public class TenderService {
     public Tender addBidToTender(String tenderId, Bid bid) {
         return tenderRepository.findById(tenderId)
                 .map(tender -> {
-                    List<Bid> bids = tender.getBids();
+                    // Create and save the bid first
                     bid.setCreatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
                     bid.setStatus("pending");
-                    bids.add(bid);
-                    tender.setBids(bids);
-                    tender.setBidsCount(bids.size());
+                    bid.setTenderId(tenderId);
+                    Bid savedBid = bidRepository.save(bid);
+
+                    // Add the bid ID to the tender
+                    List<String> bidIds = tender.getBidIds();
+                    bidIds.add(savedBid.getId());
+                    tender.setBidIds(bidIds);
+                    tender.setBidsCount(bidIds.size());
 
                     // Update lowest bid if applicable
                     if (tender.getLowestBid() == null || bid.getAmount() < tender.getLowestBid()) {

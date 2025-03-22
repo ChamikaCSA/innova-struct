@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Bid {
     @Id
     private String id;
+    private String tenderId;
     private String companyId;
     private String companyName;
     private double amount;
@@ -24,6 +25,14 @@ public class Bid {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getTenderId() {
+        return tenderId;
+    }
+
+    public void setTenderId(String tenderId) {
+        this.tenderId = tenderId;
     }
 
     public String getCompanyId() {

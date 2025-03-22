@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Clock, DollarSign, MapPin, Users, ArrowUpRight, X, Upload } from 'lucide-react';
+import tenderService from '../../services/tenderService';
+import userService from '../../services/userService';
 
 const TenderCard = ({ tender, onBidSubmit }) => {
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [bidForm, setBidForm] = useState({
     bidAmount: '',
     proposedDuration: '',
@@ -47,6 +51,50 @@ const TenderCard = ({ tender, onBidSubmit }) => {
     }));
   };
 
+  const handleBidSubmit = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Get current user
+      const currentUser = userService.getCurrentUser();
+      if (!currentUser || currentUser.role !== 'COMPANY') {
+        throw new Error('You must be logged in as a company to submit a bid');
+      }
+
+      // Get user details to get the company ID
+      const userDetails = await userService.getUserById(currentUser.id);
+      if (!userDetails.companyId) {
+        throw new Error('No company ID found for your account. Please contact support.');
+      }
+
+      // Create bid data
+      const bidData = {
+        companyId: userDetails.companyId,
+        companyName: currentUser.name,
+        amount: parseFloat(bidForm.bidAmount),
+        proposedDeadline: new Date(Date.now() + bidForm.proposedDuration * 24 * 60 * 60 * 1000).toISOString(),
+        message: 'Technical and financial proposals attached',
+        status: 'pending'
+      };
+
+      // Submit bid
+      await tenderService.addBidToTender(tender.id, bidData);
+
+      // Call the onBidSubmit callback if provided
+      onBidSubmit?.({
+        tenderId: tender.id,
+        ...bidForm
+      });
+
+      setShowModal(false);
+    } catch (err) {
+      console.error('Error submitting bid:', err);
+      setError(err.message || 'Failed to submit bid. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const daysRemaining = getDaysRemaining();
 
   return (
@@ -60,8 +108,8 @@ const TenderCard = ({ tender, onBidSubmit }) => {
               {tender.title}
             </h3>
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-              ${tender.status === 'open' ? 'bg-green-100 text-green-800' : 
-                tender.status === 'closing' ? 'bg-red-100 text-red-800' : 
+              ${tender.status === 'open' ? 'bg-green-100 text-green-800' :
+                tender.status === 'closing' ? 'bg-red-100 text-red-800' :
                 'bg-yellow-100 text-yellow-800'}`}>
               {tender.status.charAt(0).toUpperCase() + tender.status.slice(1)}
             </span>
@@ -78,7 +126,7 @@ const TenderCard = ({ tender, onBidSubmit }) => {
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <MapPin className="w-4 h-4 mr-2 text-yellow-500" />
-              {tender.location}
+              {tender.location || 'Location not specified'}
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <Users className="w-4 h-4 mr-2 text-yellow-500" />
@@ -103,7 +151,7 @@ const TenderCard = ({ tender, onBidSubmit }) => {
               <span>{formatDaysRemaining(daysRemaining)}</span>
             </div>
             <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-              <div 
+              <div
                 className={`h-full rounded-full transition-all duration-300 ${getTimeRemainingColor(daysRemaining)}`}
                 style={{ width: `${Math.min(100, (daysRemaining / 30) * 100)}%` }}
               />
@@ -114,16 +162,16 @@ const TenderCard = ({ tender, onBidSubmit }) => {
         {/* Action Buttons */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 group-hover:bg-yellow-50 transition-colors">
           <div className="flex gap-4">
-            <button 
+            <button
               onClick={(e) => e.stopPropagation()}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg 
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg
                 hover:bg-gray-100 transition-colors font-medium"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={handleBidClick}
-              className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg 
+              className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg
                 hover:bg-yellow-600 transition-colors font-medium flex items-center justify-center gap-2"
             >
               Bid Now
@@ -168,7 +216,7 @@ const TenderCard = ({ tender, onBidSubmit }) => {
                         name="bidAmount"
                         value={bidForm.bidAmount}
                         onChange={handleBidFormChange}
-                        className="mt-1 block w-full pl-7 rounded-md border border-gray-300 px-3 py-2 
+                        className="mt-1 block w-full pl-7 rounded-md border border-gray-300 px-3 py-2
                           focus:border-yellow-500 focus:outline-none focus:ring-yellow-500"
                         placeholder="0.00"
                         required
@@ -185,7 +233,7 @@ const TenderCard = ({ tender, onBidSubmit }) => {
                       name="proposedDuration"
                       value={bidForm.proposedDuration}
                       onChange={handleBidFormChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2
                         focus:border-yellow-500 focus:outline-none focus:ring-yellow-500"
                       required
                     />
@@ -199,12 +247,12 @@ const TenderCard = ({ tender, onBidSubmit }) => {
                     <label className="block text-sm font-medium text-gray-700">
                       Technical Proposal
                     </label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300
                       border-dashed rounded-md hover:border-yellow-500 transition-colors">
                       <div className="space-y-1 text-center">
                         <Upload className="mx-auto h-8 w-8 text-gray-400" />
                         <div className="flex text-sm text-gray-600">
-                          <label className="relative cursor-pointer rounded-md font-medium text-yellow-600 
+                          <label className="relative cursor-pointer rounded-md font-medium text-yellow-600
                             hover:text-yellow-500">
                             <span>Upload a file</span>
                             <input
@@ -226,12 +274,12 @@ const TenderCard = ({ tender, onBidSubmit }) => {
                     <label className="block text-sm font-medium text-gray-700">
                       Financial Proposal
                     </label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300
                       border-dashed rounded-md hover:border-yellow-500 transition-colors">
                       <div className="space-y-1 text-center">
                         <Upload className="mx-auto h-8 w-8 text-gray-400" />
                         <div className="flex text-sm text-gray-600">
-                          <label className="relative cursor-pointer rounded-md font-medium text-yellow-600 
+                          <label className="relative cursor-pointer rounded-md font-medium text-yellow-600
                             hover:text-yellow-500">
                             <span>Upload a file</span>
                             <input
@@ -265,24 +313,25 @@ const TenderCard = ({ tender, onBidSubmit }) => {
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-4">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg 
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg
                   hover:bg-gray-100 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  onBidSubmit?.({
-                    tenderId: tender.id,
-                    ...bidForm
-                  });
-                  setShowModal(false);
-                }}
-                className="px-4 py-2 bg-yellow-500 text-white rounded-lg 
-                  hover:bg-yellow-600 transition-colors font-medium"
+                onClick={handleBidSubmit}
+                disabled={loading}
+                className={`px-4 py-2 bg-yellow-500 text-white rounded-lg
+                  hover:bg-yellow-600 transition-colors font-medium
+                  ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                Confirm Bid
+                {loading ? 'Submitting...' : 'Confirm Bid'}
               </button>
+              {error && (
+                <div className="text-red-500 text-sm mt-2">
+                  {error}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -293,11 +342,11 @@ const TenderCard = ({ tender, onBidSubmit }) => {
 
 TenderCard.propTypes = {
   tender: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     budget: PropTypes.number.isRequired,
-    location: PropTypes.string.isRequired,
+    location: PropTypes.string,
     status: PropTypes.string.isRequired,
     bidsCount: PropTypes.number.isRequired,
     daysLeft: PropTypes.number,

@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import PropTypes from 'prop-types';
 import {
   Home,
   Building,
-
   FileText,
   Settings,
   LogOut,
@@ -13,6 +12,7 @@ import {
   Briefcase,
   LineChart,
 } from "lucide-react";
+import userService from '../services/userService';
 
 // Helper component for nav items with PropTypes
 const NavItem = ({ href, icon, text, isMinimized }) => {
@@ -54,6 +54,34 @@ NavItem.propTypes = {
 
 function CompanyNavbar() {
   const [isMinimized, setIsMinimized] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+
+  useEffect(() => {
+    // Get current user's name
+    const currentUser = userService.getCurrentUser();
+    if (currentUser) {
+      setCompanyName(currentUser.name);
+    }
+
+    // Handle responsive behavior
+    const handleResize = () => {
+      if (window.innerWidth < 768 && !isMinimized) {
+        setIsMinimized(true);
+        window.dispatchEvent(new CustomEvent('sidebarStateChange', { detail: true }));
+      }
+    };
+
+    // Set initial responsive state
+    handleResize();
+
+    // Add event listeners
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isMinimized]);
 
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
@@ -87,7 +115,7 @@ function CompanyNavbar() {
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-yellow-300 rounded-full"></div>
             </div>
             <div>
-              <p className="text-sm font-medium text-yellow-900">Lanka Constructions</p>
+              <p className="text-sm font-medium text-yellow-900">{companyName}</p>
               <p className="text-xs text-yellow-800/70">Company Account</p>
             </div>
           </div>

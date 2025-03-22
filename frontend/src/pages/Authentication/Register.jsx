@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import userService from "../../services/userService";
+import companyService from "../../services/companyService";
 
 function Register() {
   const [userData, setUserData] = useState({
@@ -9,6 +10,8 @@ function Register() {
     confirmPassword: "",
     name: "",
     role: "CLIENT", // Default role
+    companyType: "", // New field for company type
+    shortDescription: "", // New field for company description
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,6 +41,14 @@ function Register() {
       return false;
     }
 
+    // Additional validation for company registration
+    if (userData.role === "COMPANY") {
+      if (!userData.companyType) {
+        setError("Company type is required");
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -55,6 +66,27 @@ function Register() {
     try {
       // Remove confirmPassword before sending to API
       const { confirmPassword, ...registrationData } = userData;
+
+      // If registering as a company, create company profile first
+      let companyId = null;
+      if (userData.role === "COMPANY") {
+        const companyData = {
+          name: userData.name,
+          shortDescription: userData.shortDescription,
+          type: userData.companyType,
+          rating: 0.0,
+          services: [],
+          projects: [],
+          reviews: []
+        };
+        const companyResponse = await companyService.createCompany(companyData);
+        companyId = companyResponse.id;
+      }
+
+      // Add companyId to registration data if it's a company
+      if (companyId) {
+        registrationData.companyId = companyId;
+      }
 
       // Register user
       const response = await userService.register(registrationData);
@@ -161,6 +193,42 @@ function Register() {
                 <option value="COMPANY">Company</option>
               </select>
             </div>
+
+            {/* Company-specific fields */}
+            {userData.role === "COMPANY" && (
+              <>
+                <div>
+                  <label className="label">
+                    <span className="text-base label-text">Company Type</span>
+                  </label>
+                  <select
+                    name="companyType"
+                    className="w-full select select-bordered"
+                    value={userData.companyType}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select Company Type</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Residential">Residential</option>
+                    <option value="Industrial">Industrial</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="text-base label-text">Company Description</span>
+                  </label>
+                  <textarea
+                    name="shortDescription"
+                    placeholder="Brief description of your company"
+                    className="w-full textarea textarea-bordered"
+                    value={userData.shortDescription}
+                    onChange={handleChange}
+                  />
+                </div>
+              </>
+            )}
+
             <div>
               <button
                 type="submit"

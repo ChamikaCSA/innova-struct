@@ -7,11 +7,19 @@ import {
   Clock, CheckCircle, AlertTriangle
 } from 'lucide-react';
 import CompanyNavbar from '../../components/CompanyNavbar';
+import userService from '../../services/userService';
 
 const CompanyHome = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [companyName, setCompanyName] = useState('');
 
   useEffect(() => {
+    // Get current user's name
+    const currentUser = userService.getCurrentUser();
+    if (currentUser) {
+      setCompanyName(currentUser.name);
+    }
+
     const handleSidebarStateChange = (event) => {
       setIsSidebarMinimized(event.detail);
     };
@@ -153,7 +161,7 @@ const CompanyHome = () => {
             {/* Welcome Message */}
             <div className="mb-6">
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
-                Welcome, <span className="text-yellow-500">Lanka Constructions</span>
+                Welcome, <span className="text-yellow-500">{companyName}</span>
               </h1>
               <p className="text-gray-600 mt-2">Company Dashboard Overview</p>
             </div>

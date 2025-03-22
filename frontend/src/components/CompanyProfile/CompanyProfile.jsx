@@ -1,14 +1,14 @@
 import PropTypes from 'prop-types';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { 
-  Star, History, TrendingUp, Wrench, Shield, 
-  Trophy, MapPin, Users, Calendar 
+import {
+  Star, History, TrendingUp, Wrench, Shield,
+  Trophy, MapPin, Users, Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const CompanyProfile = ({ company }) => {
   const navigate = useNavigate();
-  
+
   const renderStars = (rating) => {
     return (
       <div className="flex items-center gap-1">
@@ -51,19 +51,19 @@ const CompanyProfile = ({ company }) => {
     <div className="card bg-base-100 shadow-xl mb-8">
 
       <div className="relative">
-        <img 
-          src={company.coverImage || defaultCoverImage} 
-          alt={`${company.name} cover`} 
+        <img
+          src={company.coverImage || defaultCoverImage}
+          alt={`${company.name} cover`}
           className="w-full h-48 object-cover rounded-t-lg"
         />
-        
+
         {/* Update this avatar/icon section */}
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
           <div className="w-40 h-40 rounded-full ring-2 ring-yellow-600 ring-offset-base-100 ring-offset-2 bg-white overflow-hidden shadow-md">
-            <img 
-              src={company.profileIcon || defaultProfileIcon} 
+            <img
+              src={company.profileIcon || defaultProfileIcon}
               alt={`${company.name} logo`}
-              className="w-full h-full object-cover" 
+              className="w-full h-full object-cover"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ const CompanyProfile = ({ company }) => {
           </div>
         </div>
 
-        
+
       </div>
     </div>
   );
@@ -268,7 +268,7 @@ const CompanyProfile = ({ company }) => {
   return (
     <div className="container mx-auto py-8">
       <CompanyHeader />
-      
+
       <TabGroup>
         <TabList className="flex space-x-1 rounded-xl bg-yellow-100 p-1">
           {tabs.map((tab) => (
@@ -320,7 +320,7 @@ const CompanyProfile = ({ company }) => {
         </section>
       )}
       <div className="flex gap-4 mt-6 justify-center">
-          <button 
+          <button
             onClick={() => navigate(`/quote-request/${company.id}`)}
             className="btn btn-primary"
           >

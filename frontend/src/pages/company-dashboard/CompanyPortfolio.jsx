@@ -21,7 +21,7 @@ const CompanyPortfolio = () => {
   return (
     <div className="flex">
       <CompanyNavbar />
-      <div 
+      <div
         className={`flex-1 transition-all duration-300 ${
           isSidebarMinimized ? 'ml-20' : 'ml-80'
         }`}

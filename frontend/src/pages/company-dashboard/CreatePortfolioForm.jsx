@@ -3,6 +3,7 @@ import { ArrowLeft, Upload, Plus, Trash2, FileText } from "lucide-react";
 import PropTypes from "prop-types";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import userService from "../../services/userService";
 
 const CreatePortfolioForm = ({ onCancel }) => {
   // Add navigate hook near the top of your component
@@ -728,9 +729,22 @@ const CreatePortfolioForm = ({ onCancel }) => {
         }
       });
 
+      // Get the current logged-in user and fetch their complete data
+      const currentUser = userService.getCurrentUser();
+      if (!currentUser) {
+        throw new Error("No logged-in user found");
+      }
+
+      // Fetch complete user data to get companyId
+      const completeUserData = await userService.getUserById(currentUser.id);
+      if (!completeUserData || !completeUserData.companyId) {
+        throw new Error("No company ID found for the logged-in user");
+      }
+
       // Create a clean copy of form data for JSON serialization
       const cleanFormData = {
         ...formData,
+        companyId: completeUserData.companyId, // Use companyId from complete user data
         // Structure contact information as expected by the backend
         contactInformation: {
           email: formData.email,
@@ -759,7 +773,7 @@ const CreatePortfolioForm = ({ onCancel }) => {
       formDataObj.append("companyData", JSON.stringify(cleanFormData));
 
       const response = await axios.post(
-        "http://localhost:8080/company/portfolio",
+        "http://localhost:8080/api/companies/portfolio",
         formDataObj,
         {
           headers: {
@@ -771,7 +785,7 @@ const CreatePortfolioForm = ({ onCancel }) => {
       if (response.status === 201) {
         const createdCompany = response.data;
         console.log("Created company:", createdCompany);
-        navigate(`/company/profile/${createdCompany.id}`);
+        navigate(`/company/home`);
       }
     } catch (error) {
       console.error("Error submitting form:", error);

@@ -14,6 +14,7 @@ public class User {
     private String profileImage;
     private String createdAt;
     private String updatedAt;
+    private String companyId; // ID of the associated company for company users
 
     public User() {
     }
@@ -87,5 +88,13 @@ public class User {
 
     public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(String companyId) {
+        this.companyId = companyId;
     }
 }

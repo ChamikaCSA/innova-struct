@@ -435,7 +435,8 @@ public class BidAnalyticsService {
 
         for (Tender tender : filteredTenders) {
             // Only include completed projects (with accepted bids)
-            List<Bid> acceptedBids = tender.getBids() != null ? tender.getBids().stream()
+            List<Bid> acceptedBids = tender.getBidIds() != null ?
+                bidRepository.findAllById(tender.getBidIds()).stream()
                     .filter(bid -> "accepted".equals(bid.getStatus()))
                     .collect(Collectors.toList()) : Collections.emptyList();
 

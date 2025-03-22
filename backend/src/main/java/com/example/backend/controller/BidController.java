@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(maxAge = 3600)
 @RestController
@@ -30,7 +31,7 @@ public class BidController {
     }
 
     @GetMapping("/company/{companyId}")
-    public ResponseEntity<List<Bid>> getBidsByCompanyId(@PathVariable String companyId) {
+    public ResponseEntity<List<Map<String, Object>>> getBidsByCompanyId(@PathVariable String companyId) {
         return ResponseEntity.ok(bidService.getBidsByCompanyId(companyId));
     }
 

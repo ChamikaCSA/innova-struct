@@ -17,7 +17,7 @@ const CompanyProfilePage = () => {
       try {
         console.log("Fetching company data for ID:", id);
         const response = await axios.get(
-          `http://localhost:8080/company/portfolio/${id}`
+          `http://localhost:8080/api/companies/portfolio/${id}`
         );
         console.log("Received company data:", response.data);
 
@@ -110,7 +110,7 @@ const CompanyProfilePage = () => {
 
   return (
     <div className="flex min-h-screen">
-      
+
       <CompanyNavbar/>
       <div
         className={`flex-1 transition-all duration-300 ${

@@ -10,5 +10,5 @@ import java.util.List;
 public interface TenderRepository extends MongoRepository<Tender, String> {
     List<Tender> findByClientId(String clientId);
     List<Tender> findByStatus(String status);
-    List<Tender> findByBidsCompanyId(String companyId);
+    List<Tender> findByBidIdsIn(List<String> bidIds);
 }

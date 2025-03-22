@@ -3,9 +3,16 @@ import { Link } from 'react-router-dom';
 import { Building, Users, FileText, Settings, Plus, Activity, Briefcase, Bell } from 'lucide-react';
 import AdsSlideshow from '../../components/AdsSlideshow';
 import ClientNavbar from '../../components/ClientNavbar';
+import dashboardService from '../../services/dashboardService';
+import userService from '../../services/userService';
 
 const Home = () => {
-    const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [clientName, setClientName] = useState('');
 
   useEffect(() => {
     const handleSidebarStateChange = (event) => {
@@ -18,31 +25,88 @@ const Home = () => {
     };
   }, []);
 
-  // Updated stats for home construction clients
+  useEffect(() => {
+    // Get current user's name
+    const currentUser = userService.getCurrentUser();
+    if (currentUser) {
+      setClientName(currentUser.name);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const summary = await dashboardService.getClientDashboardSummary();
+        setDashboardData(summary);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to load dashboard data');
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
+    // Refresh data every 5 minutes
+    const interval = setInterval(fetchDashboardData, 300000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fetchRecentActivity = async () => {
+      try {
+        const activities = await dashboardService.getRecentTenderActivity();
+        const formattedActivities = activities.map(activity => ({
+          id: activity.id,
+          text: `${activity.title} - ${activity.status}`,
+          time: new Date(activity.createdAt).toLocaleString(),
+          icon: activity.status === 'new' ? <Bell /> :
+                activity.status === 'active' ? <Activity /> : <Briefcase />,
+          stats: `${activity.bidsCount} bids | Budget: $${activity.budget.toLocaleString()}`
+        }));
+        setRecentActivities(formattedActivities);
+      } catch (err) {
+        console.error('Failed to fetch recent activities:', err);
+      }
+    };
+
+    fetchRecentActivity();
+    const interval = setInterval(fetchRecentActivity, 300000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="flex h-screen items-center justify-center text-red-500">{error}</div>;
+  }
+
   const statCards = [
     {
-      label: 'Home Projec',
-      extra: '+1 Planned',
-      value: '1',
+      label: 'Total Tenders',
+      extra: `${dashboardData.activeTenders} Active`,
+      value: dashboardData.totalTenders
     },
     {
-      label: 'Quotes Received',
-      extra: '3 New',
-      value: '3',
+      label: 'Total Bids',
+      extra: `${dashboardData.acceptedBids} Accepted`,
+      value: dashboardData.totalBids
     },
     {
-      label: 'Top Builders',
+      label: 'Completed Tenders',
       extra: '',
-      value: '5',
+      value: dashboardData.completedTenders
     },
     {
-      label: 'Avg. Completion',
+      label: 'Total Budget',
       extra: '',
-      value: '6 months',
+      value: `$${Math.round(dashboardData.totalBudget).toLocaleString()}`
     },
   ];
 
-  // Updated main cards to focus on home building
   const mainCards = [
     {
       title: 'Find Builders',
@@ -50,7 +114,7 @@ const Home = () => {
       description: 'Browse trusted home builders to bring your dream house to life.',
       link: '/client/companies',
       color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
-      stats: '5 builders'
+      stats: `${dashboardData.totalBids} active bids`
     },
     {
       title: 'Request a Quote',
@@ -58,7 +122,7 @@ const Home = () => {
       description: 'Submit your project details and receive detailed quotes from top builders.',
       link: '/client/tender',
       color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
-      stats: '3 quotes',
+      stats: `${dashboardData.activeTenders} active tenders`,
       action: {
         icon: <Plus size={24} />,
         label: 'Request Quote',
@@ -75,7 +139,6 @@ const Home = () => {
       description: 'Chat with home design experts for personalized advice.',
       link: '/client/insights',
       color: 'bg-amber-400',
-      count: 5
     },
     {
       title: 'Settings',
@@ -84,13 +147,6 @@ const Home = () => {
       link: '/client/settings',
       color: 'bg-amber-400'
     }
-  ];
-
-  // Recent activities updated to reflect home building
-  const recentActivities = [
-    { id: 1, text: 'New quote received from DreamHome Constructions', time: '2 hours ago', icon: <Bell /> },
-    { id: 2, text: 'Your project plan was viewed by 3 top builders', time: '3 hours ago', icon: <Activity /> },
-    { id: 3, text: 'Consultation scheduled for design ideas', time: 'Yesterday', icon: <Briefcase /> },
   ];
 
   return (
@@ -105,9 +161,9 @@ const Home = () => {
           {/* Welcome Message */}
           <div className="mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
-              Hello, <span className="text-yellow-500"></span>
+              Hello, <span className="text-yellow-500">{clientName}</span>
             </h1>
-            <p className="text-gray-600 mt-2">Let build your home!</p>
+            <p className="text-gray-600 mt-2">Let's build your home!</p>
           </div>
 
           {/* Stats Overview Section */}

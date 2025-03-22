@@ -187,7 +187,6 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
           {/* Catch all unmatched routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

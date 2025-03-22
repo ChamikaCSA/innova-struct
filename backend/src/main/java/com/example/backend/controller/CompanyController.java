@@ -54,6 +54,11 @@ public class CompanyController {
         return new ResponseEntity<>(companyService.createCompany(company), HttpStatus.CREATED);
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<Company> createCompanyWithUser(@RequestBody Company company) {
+        return new ResponseEntity<>(companyService.createCompany(company), HttpStatus.CREATED);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Company> updateCompany(@PathVariable String id, @RequestBody Company companyDetails) {
         return ResponseEntity.ok(companyService.updateCompany(id, companyDetails));

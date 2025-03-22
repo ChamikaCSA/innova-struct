@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import {
   Home,
   Building,
-
   FileText,
   Settings,
   LogOut,
@@ -13,6 +12,7 @@ import {
   User,
   LineChart,
 } from "lucide-react";
+import userService from '../services/userService';
 
 // Helper component for nav items with PropTypes
 const NavItem = ({ href, icon, text, isMinimized }) => {
@@ -54,8 +54,15 @@ NavItem.propTypes = {
 function ClientNavbar() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [greeting, setGreeting] = useState('');
+  const [clientName, setClientName] = useState('');
 
   useEffect(() => {
+    // Get current user's name
+    const currentUser = userService.getCurrentUser();
+    if (currentUser) {
+      setClientName(currentUser.name);
+    }
+
     // Set initial greeting
     const updateGreeting = () => {
       const hour = new Date().getHours();
@@ -111,7 +118,7 @@ function ClientNavbar() {
             alt="Logo"
             className="w-9 h-10.5 -translate-y-0.5"
           />
-          {!isMinimized && <h2 className="text-2xl font-bold">Application Name</h2>}
+          {!isMinimized && <h2 className="text-2xl font-bold">InnovaStruct</h2>}
         </div>
         <button
           onClick={toggleMinimize}
@@ -132,7 +139,7 @@ function ClientNavbar() {
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-yellow-300 rounded-full"></div>
             </div>
             <div>
-              <p className="text-sm font-medium text-yellow-900">Sukith Jayasooriya</p>
+              <p className="text-sm font-medium text-yellow-900">{clientName}</p>
               <p className="text-xs text-yellow-800/70">{greeting}!</p>
             </div>
           </div>
