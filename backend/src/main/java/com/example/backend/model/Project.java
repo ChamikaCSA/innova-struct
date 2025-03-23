@@ -1,9 +1,11 @@
 package com.example.backend.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.List;
 
 @Document(collection = "projects")
 public class Project {
@@ -12,7 +14,7 @@ public class Project {
     private String title;
     private String description;
     private int year;
-    private String imageUrls; // Comma-separated URLs
+    private List<String> imageIds; // Store image IDs instead of binary data
 
     @DBRef
     @JsonBackReference
@@ -53,12 +55,12 @@ public class Project {
         this.year = year;
     }
 
-    public String getImageUrls() {
-        return imageUrls;
+    public List<String> getImageIds() {
+        return imageIds;
     }
 
-    public void setImageUrls(String imageUrls) {
-        this.imageUrls = imageUrls;
+    public void setImageIds(List<String> imageIds) {
+        this.imageIds = imageIds;
     }
 
     public Company getCompany() {

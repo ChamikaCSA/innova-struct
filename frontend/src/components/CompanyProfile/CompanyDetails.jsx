@@ -3,12 +3,17 @@ import PropTypes from 'prop-types';
 import { Building2 } from 'lucide-react';
 
 const CompanyDetails = ({ company }) => {
+  const getImageUrl = (imageId) => {
+    if (!imageId) return null;
+    return `http://localhost:8080/api/images/${imageId}`;
+  };
+
   return (
     <div className="card">
       <figure className="relative">
         {company.coverImage ? (
           <img
-            src={company.coverImage}
+            src={getImageUrl(company.coverImage)}
             alt={company.name}
             className="w-full h-80 object-cover rounded-lg"
           />
@@ -19,7 +24,7 @@ const CompanyDetails = ({ company }) => {
           <div className="w-48 h-48 rounded-full ring-4 ring-primary ring-offset-base-100 ring-offset-4 bg-white shadow-2xl border-4 border-white">
             {company.profileIcon ? (
               <img
-                src={company.profileIcon}
+                src={getImageUrl(company.profileIcon)}
                 alt={company.name + ' Logo'}
                 className="w-full h-full object-cover"
               />
@@ -59,8 +64,8 @@ CompanyDetails.propTypes = {
     location: PropTypes.string.isRequired,
     employees: PropTypes.string.isRequired,
     services: PropTypes.arrayOf(PropTypes.string).isRequired,
-    coverImage: PropTypes.string.isRequired,
-    profileIcon: PropTypes.string.isRequired,
+    coverImage: PropTypes.string,
+    profileIcon: PropTypes.string,
   }).isRequired,
 };
 

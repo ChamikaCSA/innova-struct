@@ -37,11 +37,11 @@ public class UserService {
 
     public User createUser(User user) {
         // Check if user with email already exists
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("User with email " + user.getEmail() + " already exists");
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new RuntimeException("User with this email already exists");
         }
 
-        // Set creation timestamp
+        // Set created and updated timestamps
         String now = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
@@ -49,15 +49,19 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateUser(String id, User userDetails) {
+    public User updateUser(String id, User user) {
         return userRepository.findById(id)
-                .map(user -> {
-                    user.setName(userDetails.getName());
-                    user.setEmail(userDetails.getEmail());
-                    user.setProfileImage(userDetails.getProfileImage());
-                    user.setPhone(userDetails.getPhone());
-                    user.setUpdatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-                    return userRepository.save(user);
+                .map(existingUser -> {
+                    // Update only non-null fields
+                    if (user.getName() != null) existingUser.setName(user.getName());
+                    if (user.getEmail() != null) existingUser.setEmail(user.getEmail());
+                    if (user.getPhone() != null) existingUser.setPhone(user.getPhone());
+                    if (user.getProfileImage() != null) existingUser.setProfileImage(user.getProfileImage());
+
+                    // Update timestamp
+                    existingUser.setUpdatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+
+                    return userRepository.save(existingUser);
                 })
                 .orElseThrow(() -> new RuntimeException("User not found with id " + id));
     }

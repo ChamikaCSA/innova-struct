@@ -13,6 +13,7 @@ import {
   LineChart,
 } from "lucide-react";
 import userService from '../services/userService';
+import { getImageUrl } from '../utils/imageUtils';
 
 // Helper component for nav items with PropTypes
 const NavItem = ({ href, icon, text, isMinimized }) => {
@@ -55,13 +56,32 @@ function ClientNavbar() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [clientName, setClientName] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
 
   useEffect(() => {
-    // Get current user's name
-    const currentUser = userService.getCurrentUser();
-    if (currentUser) {
-      setClientName(currentUser.name);
-    }
+    // Get current user's name and profile image
+    const loadUserData = async () => {
+      const currentUser = userService.getCurrentUser();
+      if (currentUser) {
+        try {
+          const userData = await userService.getUserById(currentUser.id);
+          setClientName(userData.name);
+          setProfileImage(userData.profileImage);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    // Initial load
+    loadUserData();
+
+    // Listen for user data updates
+    const handleUserUpdate = () => {
+      loadUserData();
+    };
+
+    window.addEventListener('userDataUpdated', handleUserUpdate);
 
     // Set initial greeting
     const updateGreeting = () => {
@@ -93,6 +113,7 @@ function ClientNavbar() {
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('userDataUpdated', handleUserUpdate);
       clearInterval(greetingInterval);
     };
   }, [isMinimized]);
@@ -133,8 +154,16 @@ function ClientNavbar() {
         <div className="mt-6 px-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-                <User className="w-6 h-6 text-yellow-600" />
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm overflow-hidden">
+                {profileImage ? (
+                  <img
+                    src={getImageUrl(profileImage)}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-6 h-6 text-yellow-600" />
+                )}
               </div>
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-yellow-300 rounded-full"></div>
             </div>

@@ -27,6 +27,8 @@ public class PortfolioController {
     @PostMapping
     public ResponseEntity<?> createPortfolio(
             @RequestParam("companyData") String companyDataJson,
+            @RequestParam(value = "profileIcon", required = false) MultipartFile profileIcon,
+            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage,
             @RequestParam(value = "projectImages", required = false) List<MultipartFile> projectImages,
             @RequestParam(value = "certificateImages", required = false) List<MultipartFile> certificateImages) {
         try {
@@ -42,7 +44,7 @@ public class PortfolioController {
             }
 
             // Create portfolio
-            Company updatedCompany = portfolioService.createPortfolio(portfolioDTO, projectImages, certificateImages);
+            Company updatedCompany = portfolioService.createPortfolio(portfolioDTO, profileIcon, coverImage, projectImages, certificateImages);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(updatedCompany);
         } catch (Exception e) {
@@ -54,6 +56,8 @@ public class PortfolioController {
     public ResponseEntity<?> updatePortfolio(
             @PathVariable String id,
             @RequestParam("companyData") String companyDataJson,
+            @RequestParam(value = "profileIcon", required = false) MultipartFile profileIcon,
+            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage,
             @RequestParam(value = "projectImages", required = false) List<MultipartFile> projectImages,
             @RequestParam(value = "certificateImages", required = false) List<MultipartFile> certificateImages) {
         try {
@@ -74,7 +78,7 @@ public class PortfolioController {
             }
 
             // Update portfolio
-            Company updatedCompany = portfolioService.createPortfolio(portfolioDTO, projectImages, certificateImages);
+            Company updatedCompany = portfolioService.createPortfolio(portfolioDTO, profileIcon, coverImage, projectImages, certificateImages);
 
             return ResponseEntity.ok(updatedCompany);
         } catch (Exception e) {

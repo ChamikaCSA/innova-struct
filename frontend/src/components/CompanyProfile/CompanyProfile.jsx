@@ -6,11 +6,17 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import ClientReviews from './ClientReviews';
 
-const CompanyProfile = ({ company }) => {
+const CompanyProfile = ({ company, onReviewAdded }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isClientView = location.pathname.includes('/client/');
+
+  const getImageUrl = (imageId) => {
+    if (!imageId) return null;
+    return `http://localhost:8080/api/images/${imageId}`;
+  };
 
   const renderStars = (rating) => {
     return (
@@ -55,7 +61,7 @@ const CompanyProfile = ({ company }) => {
       <div className="relative">
         {company.coverImage ? (
           <img
-            src={company.coverImage}
+            src={getImageUrl(company.coverImage)}
             alt={`${company.name} cover`}
             className="w-full h-48 object-cover rounded-t-lg"
           />
@@ -68,7 +74,7 @@ const CompanyProfile = ({ company }) => {
           <div className="w-40 h-40 rounded-full ring-2 ring-yellow-600 ring-offset-base-100 ring-offset-2 bg-white overflow-hidden shadow-md">
             {company.profileIcon ? (
               <img
-                src={company.profileIcon}
+                src={getImageUrl(company.profileIcon)}
                 alt={`${company.name} logo`}
                 className="w-full h-full object-cover"
               />
@@ -126,9 +132,9 @@ const CompanyProfile = ({ company }) => {
               company.trackRecord.notableProjects.map((project, idx) => (
                 <div key={idx} className="bg-white p-4 rounded-lg shadow">
                   <div className="w-full h-48 mb-3 rounded overflow-hidden bg-gray-100">
-                    {project.image ? (
+                    {project.imageIds && project.imageIds.length > 0 ? (
                       <img
-                        src={project.image}
+                        src={getImageUrl(project.imageIds[0])}
                         alt={project.title}
                         className="w-full h-full object-cover"
                       />
@@ -251,21 +257,37 @@ const CompanyProfile = ({ company }) => {
       content: company?.certificationsCompliance && (
         <div className="bg-yellow-50 p-6 rounded-lg shadow">
           <h3 className="text-xl font-bold mb-4">Industry Certifications</h3>
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
-            {company.certificationsCompliance.industryCertifications.length > 0 ? (
-              company.certificationsCompliance.industryCertifications.map((cert, idx) => (
-                <div key={idx} className="bg-white p-4 rounded-lg shadow">
-                  <h4 className="font-semibold text-lg mb-2">{cert.certification}</h4>
-                  <p className="text-gray-600">{cert.description}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {company.certifications?.map((cert) => (
+              <div key={cert.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="h-48 bg-gray-100">
+                  {cert.imageId ? (
+                    <img
+                      src={getImageUrl(cert.imageId)}
+                      alt={cert.name}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-gray-400">No certificate image</span>
+                    </div>
+                  )}
                 </div>
-              ))
-            ) : (
-              <div className="col-span-2 text-center py-8 text-gray-500">
-                No industry certifications available at this time.
+                <div className="p-4">
+                  <h4 className="font-semibold text-lg mb-2">{cert.name}</h4>
+                  <p className="text-gray-600 text-sm mb-2">Issued by: {cert.organization}</p>
+                  <div className="text-gray-500 text-sm">
+                    <p>Issue Date: {new Date(cert.issueDate).toLocaleDateString()}</p>
+                    {cert.expiryDate && (
+                      <p>Expiry Date: {new Date(cert.expiryDate).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
+            ))}
           </div>
-          <h3 className="text-xl font-bold mb-4">Safety Standards</h3>
+
+          <h3 className="text-xl font-bold mt-8 mb-4">Safety Standards</h3>
           <div className="space-y-2">
             {company.certificationsCompliance.safetyStandards.length > 0 ? (
               company.certificationsCompliance.safetyStandards.map((standard, idx) => (
@@ -383,29 +405,13 @@ const CompanyProfile = ({ company }) => {
         </TabPanels>
       </TabGroup>
 
-      {company.reviews && company.reviews.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Client Reviews</h2>
-          <div className="space-y-4">
-            {company.reviews.map((review) => (
-              <div key={review.id} className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="card-body">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-lg">{review.clientName}</h3>
-                      {renderStars(review.rating)}
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      {new Date(review.date).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-gray-700">{review.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="mt-8">
+        <ClientReviews
+          reviews={company.reviews || []}
+          companyId={company.id}
+          onReviewAdded={onReviewAdded}
+        />
+      </section>
 
       {/* Contact and Quote buttons for client view */}
       {isClientView && (
@@ -423,7 +429,6 @@ const CompanyProfile = ({ company }) => {
               } else if (company.contactInfo?.phone) {
                 window.location.href = `tel:${company.contactInfo.phone}`;
               } else {
-                // If no contact info is available, show a message
                 alert('Contact information is not available for this company. Please use the quote request form instead.');
               }
             }}
@@ -468,6 +473,7 @@ CompanyProfile.propTypes = {
     certificationsCompliance: PropTypes.object,
     awardsRecognitions: PropTypes.object,
   }).isRequired,
+  onReviewAdded: PropTypes.func.isRequired,
 };
 
 export default CompanyProfile;

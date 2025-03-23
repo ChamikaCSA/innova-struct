@@ -4,7 +4,11 @@ const settingsService = {
   // Profile settings
   updateProfile: async (userId, profileData) => {
     try {
-      const response = await api.put(`/users/${userId}`, profileData);
+      const response = await api.put(`/users/${userId}`, profileData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       throw error;

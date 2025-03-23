@@ -1,6 +1,7 @@
 package com.example.backend.controller;
 
 import com.example.backend.model.Company;
+import com.example.backend.model.Review;
 import com.example.backend.service.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -79,5 +80,10 @@ public class CompanyController {
     public ResponseEntity<Void> deleteCompany(@PathVariable String id) {
         companyService.deleteCompany(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/reviews")
+    public ResponseEntity<Company> addReview(@PathVariable String id, @RequestBody Review review) {
+        return ResponseEntity.ok(companyService.addReview(id, review));
     }
 }

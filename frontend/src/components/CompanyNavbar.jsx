@@ -11,9 +11,11 @@ import {
   ChevronRight,
   Briefcase,
   LineChart,
+  User
 } from "lucide-react";
 import userService from '../services/userService';
 import companyService from '../services/companyService';
+import { getImageUrl } from '../utils/imageUtils';
 
 // Helper component for nav items with PropTypes
 const NavItem = ({ href, icon, text, isMinimized }) => {
@@ -55,28 +57,34 @@ NavItem.propTypes = {
 
 function CompanyNavbar() {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [companyName, setCompanyName] = useState('');
+  const [userName, setUserName] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
 
-  useEffect(() => {
-    // Get current user's name
+  const loadUserData = async () => {
     const currentUser = userService.getCurrentUser();
     if (currentUser) {
-      // Fetch company data to get the company name
-      const fetchCompanyData = async () => {
-        try {
-          const userDetails = await userService.getUserById(currentUser.id);
-          if (userDetails && userDetails.companyId) {
-            const companyData = await companyService.getCompanyById(userDetails.companyId);
-            if (companyData) {
-              setCompanyName(companyData.name);
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching company data:', error);
+      try {
+        const userDetails = await userService.getUserById(currentUser.id);
+        if (userDetails) {
+          setUserName(userDetails.name);
+          setProfileImage(userDetails.profileImage);
         }
-      };
-      fetchCompanyData();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     }
+  };
+
+  useEffect(() => {
+    // Initial load of user data
+    loadUserData();
+
+    // Listen for user data updates
+    const handleUserUpdate = () => {
+      loadUserData();
+    };
+
+    window.addEventListener('userDataUpdated', handleUserUpdate);
 
     // Handle responsive behavior
     const handleResize = () => {
@@ -95,6 +103,7 @@ function CompanyNavbar() {
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('userDataUpdated', handleUserUpdate);
     };
   }, [isMinimized]);
 
@@ -124,13 +133,21 @@ function CompanyNavbar() {
         <div className="mt-6 px-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-                <Briefcase className="w-6 h-6 text-yellow-600" />
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm overflow-hidden">
+                {profileImage ? (
+                  <img
+                    src={getImageUrl(profileImage)}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-6 h-6 text-yellow-600" />
+                )}
               </div>
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-yellow-300 rounded-full"></div>
             </div>
             <div>
-              <p className="text-sm font-medium text-yellow-900">{companyName}</p>
+              <p className="text-sm font-medium text-yellow-900">{userName}</p>
               <p className="text-xs text-yellow-800/70">Company Account</p>
             </div>
           </div>

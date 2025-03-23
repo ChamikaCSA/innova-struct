@@ -8,6 +8,11 @@ import userService from "../../services/userService";
 const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
   const navigate = useNavigate();
 
+  const getImageUrl = (imageId) => {
+    if (!imageId) return null;
+    return `http://localhost:8080/api/images/${imageId}`;
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState(1);
   const [formData, setFormData] = useState(initialData || {
@@ -18,6 +23,8 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
     location: "",
     employeeCount: "",
     services: [],
+    profileIcon: null,
+    coverImage: null,
     projects: [
       {
         name: "",
@@ -241,6 +248,28 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
     }));
   };
 
+  const handleImageChange = (e, field) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
+        alert("File size should be less than 5MB");
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        [field]: file,
+      }));
+    }
+  };
+
+  const handleImageRemove = (field) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: null,
+    }));
+  };
+
   const renderStep = () => {
     switch (activeStep) {
       case 1:
@@ -263,6 +292,128 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
   const renderCompanyDetails = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="col-span-2 space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Cover Image
+              <span className="ml-1 text-gray-400">(Recommended size: 1200x400px)</span>
+            </label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-yellow-500 transition-colors">
+              <div className="space-y-1 text-center">
+                {typeof formData.coverImage === 'string' ? (
+                  <div className="relative">
+                    <img
+                      src={getImageUrl(formData.coverImage)}
+                      alt="Cover preview"
+                      className="mx-auto h-32 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleImageRemove('coverImage')}
+                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : formData.coverImage ? (
+                  <div className="relative">
+                    <img
+                      src={URL.createObjectURL(formData.coverImage)}
+                      alt="Cover preview"
+                      className="mx-auto h-32 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleImageRemove('coverImage')}
+                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label htmlFor="cover-image" className="relative cursor-pointer bg-white rounded-md font-medium text-yellow-600 hover:text-yellow-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-yellow-500">
+                        <span>Upload a cover image</span>
+                        <input
+                          id="cover-image"
+                          name="coverImage"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(e, 'coverImage')}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Profile Image
+              <span className="ml-1 text-gray-400">(Recommended size: 400x400px)</span>
+            </label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-yellow-500 transition-colors">
+              <div className="space-y-1 text-center">
+                {typeof formData.profileIcon === 'string' ? (
+                  <div className="relative">
+                    <img
+                      src={getImageUrl(formData.profileIcon)}
+                      alt="Profile preview"
+                      className="mx-auto h-32 w-32 object-cover rounded-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleImageRemove('profileIcon')}
+                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : formData.profileIcon ? (
+                  <div className="relative">
+                    <img
+                      src={URL.createObjectURL(formData.profileIcon)}
+                      alt="Profile preview"
+                      className="mx-auto h-32 w-32 object-cover rounded-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleImageRemove('profileIcon')}
+                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label htmlFor="profile-image" className="relative cursor-pointer bg-white rounded-md font-medium text-yellow-600 hover:text-yellow-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-yellow-500">
+                        <span>Upload a profile image</span>
+                        <input
+                          id="profile-image"
+                          name="profileIcon"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(e, 'profileIcon')}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Company Name
@@ -362,6 +513,20 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
+            Location
+          </label>
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleInputChange}
+            placeholder="City, Country"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-yellow-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
             Number of Employees
           </label>
           <input
@@ -455,51 +620,63 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Project Images
+                <span className="ml-1 text-gray-400">(Max 5 images)</span>
               </label>
-              {project.images && project.images.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
-                  {project.images.map((image, imgIndex) => (
-                    <div key={imgIndex} className="relative group">
-                      <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden bg-gray-100">
-                        {typeof image === 'string' ? (
-                          <img
-                            src={image}
-                            alt={`Project ${index + 1} image ${imgIndex + 1}`}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <img
-                            src={URL.createObjectURL(image)}
-                            alt={`Project ${index + 1} image ${imgIndex + 1}`}
-                            className="object-cover w-full h-full"
-                          />
-                        )}
+              <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {project.images.map((image, imageIndex) => (
+                  <div key={imageIndex} className="relative">
+                    {typeof image === 'string' ? (
+                      <>
+                        <img
+                          src={getImageUrl(image)}
+                          alt={`Project ${index + 1} preview ${imageIndex + 1}`}
+                          className="h-24 w-full object-cover rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index, imageIndex)}
+                          className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <img
+                          src={URL.createObjectURL(image)}
+                          alt={`Project ${index + 1} preview ${imageIndex + 1}`}
+                          className="h-24 w-full object-cover rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index, imageIndex)}
+                          className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+                {project.images.length < 5 && (
+                  <div>
+                    <label className="block h-24 w-full cursor-pointer border-2 border-gray-300 border-dashed rounded-md hover:border-yellow-500 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, index)}
+                        className="sr-only"
+                      />
+                      <div className="h-full flex flex-col items-center justify-center">
+                        <Upload className="w-8 h-8 text-gray-400" />
+                        <span className="mt-1 text-xs text-gray-500">Add Image</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(index, imgIndex)}
-                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <input
-                type="file"
-                onChange={(e) => handleFileChange(e, index)}
-                multiple
-                accept="image/*"
-                className="mt-1 block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-yellow-50 file:text-yellow-600
-                  hover:file:bg-yellow-100"
-              />
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -626,59 +803,63 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-yellow-500 transition-colors">
                 <div className="space-y-1 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="flex text-sm text-gray-600">
-                    <label
-                      htmlFor={`certificate-${index}`}
-                      className="relative cursor-pointer bg-white rounded-md font-medium text-yellow-600 hover:text-yellow-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-yellow-500"
-                    >
-                      <span>Upload a file</span>
-                      <input
-                        id={`certificate-${index}`}
-                        type="file"
-                        name="certificateImage"
-                        onChange={(e) => handleCertificateImageChange(e, index)}
-                        className="sr-only"
-                        accept=".pdf,.jpg,.jpeg,.png"
+                  {typeof cert.image === 'string' ? (
+                    <div className="relative">
+                      <img
+                        src={getImageUrl(cert.image)}
+                        alt={`Certificate ${index + 1}`}
+                        className="mx-auto h-32 object-contain"
                       />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    PDF, PNG, JPG up to 10MB
-                  </p>
-                </div>
-              </div>
-              {cert.image && (
-                <div className="mt-2 flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10">
-                    {cert.image.type === "application/pdf" ? (
-                      <FileText className="h-10 w-10 text-gray-400" />
-                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCertificateImage(index)}
+                        className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : cert.image ? (
+                    <div className="relative">
                       <img
                         src={URL.createObjectURL(cert.image)}
-                        alt="Certificate preview"
-                        className="h-10 w-10 object-cover rounded-md"
+                        alt={`Certificate ${index + 1}`}
+                        className="mx-auto h-32 object-contain"
                       />
-                    )}
-                  </div>
-                  <div className="ml-4 flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {cert.image.name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {(cert.image.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveCertificateImage(index)}
-                    className="ml-4 bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCertificateImage(index)}
+                        className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <div className="flex text-sm text-gray-600">
+                        <label
+                          htmlFor={`certificate-${index}`}
+                          className="relative cursor-pointer bg-white rounded-md font-medium text-yellow-600 hover:text-yellow-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-yellow-500"
+                        >
+                          <span>Upload a file</span>
+                          <input
+                            id={`certificate-${index}`}
+                            type="file"
+                            name="certificateImage"
+                            onChange={(e) => handleCertificateImageChange(e, index)}
+                            className="sr-only"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                          />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        PDF, PNG, JPG up to 10MB
+                      </p>
+                    </>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -759,6 +940,14 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
     try {
       const formDataObj = new FormData();
 
+      // Add profile and cover images if they exist
+      if (formData.profileIcon instanceof File) {
+        formDataObj.append("profileIcon", formData.profileIcon);
+      }
+      if (formData.coverImage instanceof File) {
+        formDataObj.append("coverImage", formData.coverImage);
+      }
+
       formData.projects.forEach((project) => {
         project.images.forEach((image) => {
           if (image instanceof File) {
@@ -801,6 +990,8 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
           ...cert,
           image: cert.image instanceof File ? null : cert.image,
         })),
+        profileIcon: formData.profileIcon instanceof File ? null : formData.profileIcon,
+        coverImage: formData.coverImage instanceof File ? null : formData.coverImage,
       };
 
       delete cleanFormData.email;
@@ -871,13 +1062,18 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
               key={step.number}
               className={`flex flex-col items-center ${
                 step.number === activeStep ? "text-yellow-500" : "text-gray-400"
-              }`}
+              } ${isEditing ? "cursor-pointer" : ""}`}
+              onClick={() => {
+                if (isEditing) {
+                  setActiveStep(step.number);
+                }
+              }}
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
                   step.number === activeStep
                     ? "border-yellow-500 bg-yellow-50"
-                    : "border-gray-300"
+                    : isEditing ? "border-gray-300 hover:border-yellow-300" : "border-gray-300"
                 }`}
               >
                 {step.number}
@@ -892,28 +1088,43 @@ const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
         {renderStep()}
 
         <div className="flex justify-between pt-8 border-t">
-          <button
-            type="button"
-            onClick={() => setActiveStep((prev) => prev - 1)}
-            className={`px-4 py-2 text-gray-600 hover:text-gray-800 ${
-              activeStep === 1 ? "invisible" : ""
-            }`}
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleNextStep}
-            className={`bg-yellow-500 text-white px-6 py-2 rounded-md transition-colors
-    ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-yellow-600"}`}
-          >
-            {activeStep === steps.length
-              ? isSubmitting
-                ? "Submitting..."
-                : "Submit"
-              : "Next"}
-          </button>
+          {!isEditing && (
+            <>
+              <button
+                type="button"
+                onClick={() => setActiveStep((prev) => prev - 1)}
+                className={`px-4 py-2 text-gray-600 hover:text-gray-800 ${
+                  activeStep === 1 ? "invisible" : ""
+                }`}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleNextStep}
+                className={`bg-yellow-500 text-white px-6 py-2 rounded-md transition-colors
+                ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-yellow-600"}`}
+              >
+                {activeStep === steps.length
+                  ? isSubmitting
+                    ? "Submitting..."
+                    : "Submit"
+                  : "Next"}
+              </button>
+            </>
+          )}
+          {isEditing && (
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSubmit}
+              className={`bg-yellow-500 text-white px-6 py-2 rounded-md transition-colors ml-auto
+              ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-yellow-600"}`}
+            >
+              {isSubmitting ? "Updating..." : "Update Portfolio"}
+            </button>
+          )}
         </div>
       </form>
     </div>

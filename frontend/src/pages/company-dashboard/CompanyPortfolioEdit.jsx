@@ -39,11 +39,13 @@ const CompanyPortfolioEdit = () => {
           cidaGrading: companyData.cidaGrading || "",
           engineerCapacity: companyData.engineerCapacity || "",
           services: companyData.services || [],
+          profileIcon: companyData.profileIcon || null,
+          coverImage: companyData.coverImage || null,
           projects: companyData.projects?.map(project => ({
             name: project.title || "",
             description: project.description || "",
             completionYear: project.year ? project.year.toString() : "",
-            images: project.image ? project.image.split(",") : []
+            images: project.imageIds || []
           })) || [{
             name: "",
             description: "",
@@ -57,7 +59,7 @@ const CompanyPortfolioEdit = () => {
             organization: cert.organization,
             issueDate: cert.issueDate,
             expiryDate: cert.expiryDate,
-            image: null
+            image: cert.imageId || null
           })) || [{
             name: "",
             organization: "",

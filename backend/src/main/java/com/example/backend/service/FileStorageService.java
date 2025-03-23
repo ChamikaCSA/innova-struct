@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -25,8 +26,9 @@ public class FileStorageService {
             Files.createDirectories(uploadPath);
 
             // Generate a unique filename
-            String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String filename = Objects.requireNonNullElse(file.getOriginalFilename(), "file");
+            String originalFilename = StringUtils.cleanPath(filename);
+            String fileExtension = originalFilename.contains(".") ? originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
             String newFilename = UUID.randomUUID().toString() + fileExtension;
 
             // Copy file to the target location

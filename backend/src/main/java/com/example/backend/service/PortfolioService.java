@@ -4,13 +4,13 @@ import com.example.backend.dto.PortfolioDTO;
 import com.example.backend.model.Company;
 import com.example.backend.model.Project;
 import com.example.backend.model.Certification;
-import com.example.backend.repository.CompanyRepository;
-import com.example.backend.repository.CertificationRepository;
-import com.example.backend.repository.ProjectRepository;
+import com.example.backend.model.Image;
+import com.example.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -30,9 +30,9 @@ public class PortfolioService {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private FileStorageService fileStorageService;
+    private ImageRepository imageRepository;
 
-    public Company createPortfolio(PortfolioDTO portfolioDTO, List<MultipartFile> projectImages, List<MultipartFile> certificateImages) {
+    public Company createPortfolio(PortfolioDTO portfolioDTO, MultipartFile profileIcon, MultipartFile coverImage, List<MultipartFile> projectImageFiles, List<MultipartFile> certificateImages) throws IOException {
         // Find the company
         Optional<Company> companyOptional = companyRepository.findById(portfolioDTO.getCompanyId());
         if (!companyOptional.isPresent()) {
@@ -52,10 +52,38 @@ public class PortfolioService {
         company.setCidaGrading(portfolioDTO.getCidaGrading());
         company.setEngineerCapacity(portfolioDTO.getEngineerCapacity());
 
+        // Handle profile and cover images
+        if (profileIcon != null) {
+            Image profileImage = new Image();
+            profileImage.setName(profileIcon.getOriginalFilename());
+            profileImage.setContentType(profileIcon.getContentType());
+            profileImage.setData(profileIcon.getBytes());
+            profileImage.setEntityType("company");
+            profileImage.setEntityId(company.getId());
+            profileImage = imageRepository.save(profileImage);
+            company.setProfileIcon(profileImage.getId());
+        }
+
+        if (coverImage != null) {
+            Image coverImg = new Image();
+            coverImg.setName(coverImage.getOriginalFilename());
+            coverImg.setContentType(coverImage.getContentType());
+            coverImg.setData(coverImage.getBytes());
+            coverImg.setEntityType("company");
+            coverImg.setEntityId(company.getId());
+            coverImg = imageRepository.save(coverImg);
+            company.setCoverImage(coverImg.getId());
+        }
+
         // Save company first to ensure it has an ID
         company = companyRepository.save(company);
 
-        // Delete existing projects if editing
+        // Delete existing projects and their images if editing
+        if (company.getProjects() != null) {
+            for (Project project : company.getProjects()) {
+                imageRepository.deleteByEntityTypeAndEntityId("project", project.getId());
+            }
+        }
         projectRepository.deleteByCompanyId(company.getId());
 
         // Handle projects
@@ -68,31 +96,42 @@ public class PortfolioService {
             project.setYear(Integer.parseInt(projectDTO.getCompletionYear()));
             project.setCompany(company);
 
-            // Handle project images
-            if (projectDTO.getImages() != null && !projectDTO.getImages().isEmpty()) {
-                List<String> imageUrls = new ArrayList<>();
+            // Initialize image IDs list
+            List<String> imageIds = new ArrayList<>();
+            project.setImageIds(imageIds);
 
-                // Keep existing image URLs
-                for (String image : projectDTO.getImages()) {
-                    if (!image.equals("placeholder")) {
-                        imageUrls.add(image);
-                    } else if (projectImageIndex < projectImages.size()) {
-                        // Store new image and get URL
-                        String imageUrl = fileStorageService.storeFile(projectImages.get(projectImageIndex));
-                        imageUrls.add(imageUrl);
-                        projectImageIndex++;
-                    }
-                }
-                project.setImageUrls(String.join(",", imageUrls));
+            // Save project first to get its ID
+            project = projectRepository.save(project);
+
+            // Handle project images
+            if (projectImageIndex < projectImageFiles.size()) {
+                MultipartFile imageFile = projectImageFiles.get(projectImageIndex);
+
+                // Create and save image
+                Image image = new Image();
+                image.setName(imageFile.getOriginalFilename());
+                image.setContentType(imageFile.getContentType());
+                image.setData(imageFile.getBytes());
+                image.setEntityType("project");
+                image.setEntityId(project.getId());
+
+                image = imageRepository.save(image);
+                imageIds.add(image.getId());
+                projectImageIndex++;
             }
 
-            // Save each project
+            // Update project with image IDs
             project = projectRepository.save(project);
             projects.add(project);
         }
         company.setProjects(projects);
 
-        // Delete existing certifications if editing
+        // Delete existing certifications and their images if editing
+        if (company.getCertifications() != null) {
+            for (Certification cert : company.getCertifications()) {
+                imageRepository.deleteByEntityTypeAndEntityId("certification", cert.getId());
+            }
+        }
         certificationRepository.deleteByCompanyId(company.getId());
 
         // Handle certifications
@@ -107,14 +146,27 @@ public class PortfolioService {
                 certification.setExpiryDate(certDTO.getExpiryDate());
                 certification.setCompany(company);
 
+                // Save certification first to get its ID
+                certification = certificationRepository.save(certification);
+
                 // Handle certificate image
                 if (certImageIndex < certificateImages.size()) {
-                    String imageUrl = fileStorageService.storeFile(certificateImages.get(certImageIndex));
-                    certification.setImageUrl(imageUrl);
+                    MultipartFile imageFile = certificateImages.get(certImageIndex);
+
+                    // Create and save image
+                    Image image = new Image();
+                    image.setName(imageFile.getOriginalFilename());
+                    image.setContentType(imageFile.getContentType());
+                    image.setData(imageFile.getBytes());
+                    image.setEntityType("certification");
+                    image.setEntityId(certification.getId());
+
+                    image = imageRepository.save(image);
+                    certification.setImageId(image.getId());
                     certImageIndex++;
                 }
 
-                // Save each certification
+                // Update certification with image ID
                 certification = certificationRepository.save(certification);
                 certifications.add(certification);
             }

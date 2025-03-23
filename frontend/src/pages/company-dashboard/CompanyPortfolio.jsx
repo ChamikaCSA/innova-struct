@@ -34,13 +34,16 @@ const CompanyPortfolio = () => {
       // Map projects to match the expected structure
       projects: data.projects?.map(project => ({
         ...project,
-        image: project.image ? project.image.split(",")[0] : null, // Use the first image as the display image
+        imageIds: project.imageIds || [], // Use the imageIds array directly
         title: project.title || "",
         description: project.description || "",
         year: project.year || new Date().getFullYear()
       })) || [],
 
-      // Map certifications to match the expected structure
+      // Keep original certifications array for displaying images
+      certifications: data.certifications || [],
+
+      // Map certifications to match the expected structure for compliance section
       certificationsCompliance: {
         industryCertifications: data.certifications?.map(cert => ({
           certification: cert.name,
@@ -78,8 +81,8 @@ const CompanyPortfolio = () => {
       trackRecord: {
         yearsOfExperience: data.established ? new Date().getFullYear() - parseInt(data.established) : 0,
         notableProjects: data.projects?.map(project => ({
-          image: project.image || null,
-          title: project.name || '',
+          imageIds: project.imageIds || [], // Use the imageIds array directly
+          title: project.title || '',
           description: project.description || ''
         })) || [],
         clientSatisfaction: {

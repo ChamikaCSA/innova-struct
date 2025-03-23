@@ -1,26 +1,27 @@
 package com.example.backend.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "certifications")
 public class Certification {
     @Id
     private String id;
-
     private String name;
     private String organization;
     private String issueDate;
     private String expiryDate;
-    private String imageUrl;
+    private String imageId; // Store image ID instead of binary data
 
     @DBRef
     @JsonBackReference
     private Company company;
 
-    // Getters and Setters
+    public Certification() {
+    }
+
     public String getId() {
         return id;
     }
@@ -61,12 +62,12 @@ public class Certification {
         this.expiryDate = expiryDate;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getImageId() {
+        return imageId;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
     }
 
     public Company getCompany() {

@@ -14,6 +14,11 @@ const RegisteredCompaniesPage = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const getImageUrl = (imageId) => {
+    if (!imageId) return null;
+    return `http://localhost:8080/api/images/${imageId}`;
+  };
+
   useEffect(() => {
     const handleSidebarStateChange = (event) => {
       setIsSidebarMinimized(event.detail);
@@ -217,7 +222,7 @@ const RegisteredCompaniesPage = () => {
                     <figure className="h-48 w-full">
                       {company.coverImage ? (
                         <img
-                          src={company.coverImage}
+                          src={getImageUrl(company.coverImage)}
                           alt={company.name}
                           className="w-full h-full object-cover"
                         />
