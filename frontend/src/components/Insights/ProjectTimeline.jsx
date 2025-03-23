@@ -32,42 +32,64 @@ const ProjectTimeline = () => {
       setLoading(true);
       try {
         const response = await analyticsService.getProjectTimelines(selectedType);
-        const data = response?.projectNames ? response.projectNames.map((name, index) => ({
-          type: name,
-          totalDuration: `${response.durations[index]} days`,
-          phases: [
-            {
-              name: 'Planning',
-              duration: `${Math.round(response.durations[index] * 0.2)} days`,
-              progress: 100
-            },
-            {
-              name: 'Design',
-              duration: `${Math.round(response.durations[index] * 0.3)} days`,
-              progress: 75
-            },
-            {
-              name: 'Construction',
-              duration: `${Math.round(response.durations[index] * 0.5)} days`,
-              progress: 25
-            }
-          ]
-        })) : [];
 
-        // Transform the data to include icons
-        const transformedData = data.map((project) => ({
+        // Transform the data to match the component's requirements
+        const transformedData = Object.entries(response.categories)
+          .filter(([type]) => selectedType === "all" || type.toLowerCase() === selectedType.toLowerCase())
+          .map(([type, stats]) => {
+            // Calculate phase durations based on average duration
+            const avgDuration = stats.averageDuration;
+            const planningDuration = Math.round(avgDuration * 0.2);  // 20% for Planning & Approval
+            const foundationDuration = Math.round(avgDuration * 0.25);  // 25% for Foundation
+            const constructionDuration = Math.round(avgDuration * 0.35);  // 35% for Construction
+            const finishingDuration = Math.round(avgDuration * 0.2);  // 20% for Finishing
+
+            return {
+              type,
+              totalDuration: `${avgDuration} days`,
+              stats: {
+                totalProjects: stats.totalProjects,
+                averageBudgetVariance: stats.averageBudgetVariance,
+                averageDuration: stats.averageDuration
+              },
+              phases: [
+                {
+                  name: 'Planning & Approval',
+                  duration: `${planningDuration} days`,
+                  progress: 100
+                },
+                {
+                  name: 'Foundation',
+                  duration: `${foundationDuration} days`,
+                  progress: 75
+                },
+                {
+                  name: 'Construction',
+                  duration: `${constructionDuration} days`,
+                  progress: 25
+                },
+                {
+                  name: 'Finishing',
+                  duration: `${finishingDuration} days`,
+                  progress: 0
+                }
+              ]
+            };
+          });
+
+        // Add icons to the transformed data
+        const dataWithIcons = transformedData.map((project) => ({
           ...project,
           icon: getProjectIcon(project.type),
         }));
 
-        setTimelineData(transformedData);
+        setTimelineData(dataWithIcons);
         setError(null);
       } catch (err) {
         console.error("Error fetching project timelines:", err);
         setError(
           "Failed to load project timeline data. Please try again later."
         );
-        // Fallback to empty array if API fails
         setTimelineData([]);
       } finally {
         setLoading(false);
@@ -111,7 +133,6 @@ const ProjectTimeline = () => {
               <option value="residential">Residential</option>
               <option value="commercial">Commercial</option>
               <option value="industrial">Industrial</option>
-              <option value="renovation">Renovation</option>
             </select>
           </div>
         </div>
@@ -143,7 +164,8 @@ const ProjectTimeline = () => {
                     {project.type}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Total: {project.totalDuration}
+                    Total: {project.totalDuration} | Projects: {project.stats.totalProjects} |
+                    Avg Budget Variance: {project.stats.averageBudgetVariance.toFixed(1)}%
                   </p>
                 </div>
               </div>

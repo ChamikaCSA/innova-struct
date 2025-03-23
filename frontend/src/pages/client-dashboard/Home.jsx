@@ -57,14 +57,46 @@ const Home = () => {
     const fetchRecentActivity = async () => {
       try {
         const activities = await dashboardService.getRecentTenderActivity();
-        const formattedActivities = activities.map(activity => ({
+        const formattedActivities = activities.map(activity => {
+          let text = '';
+          let icon = <Activity />;
+          let statusColor = 'text-yellow-600';
+          let bgColor = 'bg-yellow-100';
+
+          switch (activity.status) {
+            case 'new':
+              text = `New tender created: "${activity.title}"`;
+              icon = <Bell />;
+              statusColor = 'text-blue-600';
+              bgColor = 'bg-blue-100';
+              break;
+            case 'active':
+              text = `Tender "${activity.title}" is now active`;
+              icon = <Activity />;
+              statusColor = 'text-green-600';
+              bgColor = 'bg-green-100';
+              break;
+            case 'ended':
+              text = `Tender "${activity.title}" has ended`;
+              icon = <Briefcase />;
+              statusColor = 'text-gray-600';
+              bgColor = 'bg-gray-100';
+              break;
+            default:
+              text = `Tender "${activity.title}" status updated`;
+          }
+
+          return {
           id: activity.id,
-          text: `${activity.title} - ${activity.status}`,
+            text,
           time: new Date(activity.createdAt).toLocaleString(),
-          icon: activity.status === 'new' ? <Bell /> :
-                activity.status === 'active' ? <Activity /> : <Briefcase />,
-          stats: `${activity.bidsCount} bids | Budget: $${activity.budget.toLocaleString()}`
-        }));
+            icon,
+            statusColor,
+            bgColor,
+            stats: `${activity.bidsCount} bids | Budget: $${activity.budget.toLocaleString()}`,
+            deadline: activity.deadline
+          };
+        });
         setRecentActivities(formattedActivities);
       } catch (err) {
         console.error('Failed to fetch recent activities:', err);
@@ -264,18 +296,32 @@ const Home = () => {
                 {recentActivities.map((activity) => (
                   <li key={activity.id} className="p-5 hover:bg-gray-50">
                     <div className="flex items-start gap-4">
-                      <div className="bg-yellow-100 p-2 rounded-full">
-                        {React.cloneElement(activity.icon, { className: "w-5 h-5 text-yellow-600" })}
+                      <div className={`p-2 rounded-full ${activity.bgColor}`}>
+                        {React.cloneElement(activity.icon, {
+                          className: `w-5 h-5 ${activity.statusColor}`
+                        })}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-gray-800">{activity.text}</p>
+                        <div className="flex flex-wrap gap-4 mt-2">
+                          <p className="text-sm text-gray-600">{activity.stats}</p>
+                          {activity.deadline && (
+                            <p className="text-sm text-gray-600">
+                              Deadline: {new Date(activity.deadline).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
                       </div>
                     </div>
                   </li>
                 ))}
+                {recentActivities.length === 0 && (
+                  <li className="p-5 text-center text-gray-500">
+                    No recent activities
+                  </li>
+                )}
               </ul>
-
             </div>
 
             {/* Company Switch Section */}

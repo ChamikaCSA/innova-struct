@@ -59,6 +59,16 @@ const dashboardService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Get company recent activity
+  getCompanyRecentActivity: async (companyId, limit = 5) => {
+    try {
+      const response = await api.get(`/dashboard/company/${companyId}/recent-activity?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

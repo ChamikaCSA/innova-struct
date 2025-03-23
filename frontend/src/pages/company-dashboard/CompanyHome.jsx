@@ -4,11 +4,12 @@ import { Link } from 'react-router-dom';
 import {
   Building, FileText, Settings, Users,
   TrendingUp, Calendar,
-  Clock, CheckCircle, AlertTriangle
+  Clock, CheckCircle, AlertTriangle, Activity
 } from 'lucide-react';
 import CompanyNavbar from '../../components/CompanyNavbar';
 import userService from '../../services/userService';
 import companyService from '../../services/companyService';
+import dashboardService from '../../services/dashboardService';
 
 const CompanyHome = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
@@ -64,6 +65,7 @@ const CompanyHome = () => {
   ]);
 
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
 
   useEffect(() => {
     // Get current user's name
@@ -74,10 +76,11 @@ const CompanyHome = () => {
         try {
           const userDetails = await userService.getUserById(currentUser.id);
           if (userDetails && userDetails.companyId) {
-            const [companyData, dashboardStats, deadlines] = await Promise.all([
+            const [companyData, dashboardStats, deadlines, activities] = await Promise.all([
               companyService.getCompanyById(userDetails.companyId),
               companyService.getCompanyDashboardStats(userDetails.companyId),
-              companyService.getCompanyUpcomingDeadlines(userDetails.companyId)
+              companyService.getCompanyUpcomingDeadlines(userDetails.companyId),
+              dashboardService.getCompanyRecentActivity(userDetails.companyId)
             ]);
 
             if (companyData) {
@@ -140,6 +143,40 @@ const CompanyHome = () => {
             if (deadlines) {
               setUpcomingDeadlines(deadlines);
             }
+
+            if (activities) {
+              const formattedActivities = activities.map(activity => {
+                let text = '';
+                let icon = <Activity />;
+
+                switch (activity.status) {
+                  case 'accepted':
+                    text = `Bid accepted for "${activity.tenderTitle}"`;
+                    icon = <CheckCircle />;
+                    break;
+                  case 'rejected':
+                    text = `Bid rejected for "${activity.tenderTitle}"`;
+                    icon = <AlertTriangle />;
+                    break;
+                  case 'pending':
+                    text = `New bid submitted for "${activity.tenderTitle}"`;
+                    icon = <FileText />;
+                    break;
+                  default:
+                    text = `Activity for "${activity.tenderTitle}"`;
+                }
+
+                return {
+                  id: activity.id,
+                  text,
+                  time: new Date(activity.createdAt).toLocaleString(),
+                  icon,
+                  status: activity.status,
+                  amount: activity.amount
+                };
+              });
+              setRecentActivities(formattedActivities);
+            }
           }
         } catch (error) {
           console.error('Error fetching company data:', error);
@@ -188,14 +225,6 @@ const CompanyHome = () => {
       link: '/company/settings',
       color: 'bg-amber-400'
     }
-  ];
-
-  // Recent activities
-  const recentActivities = [
-    { id: 1, text: 'New quote request from Sukith Jayasooriya', time: '30 minutes ago', icon: <FileText /> },
-    { id: 2, text: 'Project "Central Tower Foundation" milestone completed', time: '2 hours ago', icon: <CheckCircle /> },
-    { id: 3, text: 'Material delivery for "Solar-Powered Apartment" delayed', time: 'Yesterday', icon: <AlertTriangle /> },
-    { id: 4, text: 'Client meeting scheduled with Kamal Perera', time: 'Yesterday', icon: <Calendar /> },
   ];
 
   return (
@@ -349,18 +378,37 @@ const CompanyHome = () => {
                   {recentActivities.map((activity) => (
                     <li key={activity.id} className="p-5 hover:bg-gray-50">
                       <div className="flex items-start gap-4">
-                        <div className="bg-yellow-100 p-2 rounded-full">
-                          {React.cloneElement(activity.icon, { className: "w-5 h-5 text-yellow-600" })}
+                        <div className={`p-2 rounded-full ${
+                          activity.status === 'accepted' ? 'bg-green-100' :
+                          activity.status === 'rejected' ? 'bg-red-100' :
+                          'bg-yellow-100'
+                        }`}>
+                          {React.cloneElement(activity.icon, {
+                            className: `w-5 h-5 ${
+                              activity.status === 'accepted' ? 'text-green-600' :
+                              activity.status === 'rejected' ? 'text-red-600' :
+                              'text-yellow-600'
+                            }`
+                          })}
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <p className="text-gray-800">{activity.text}</p>
+                          {activity.amount && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              Amount: ${activity.amount.toLocaleString()}
+                            </p>
+                          )}
                           <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
                         </div>
                       </div>
                     </li>
                   ))}
+                  {recentActivities.length === 0 && (
+                    <li className="p-5 text-center text-gray-500">
+                      No recent activities
+                    </li>
+                  )}
                 </ul>
-
               </div>
 
               {/* Switch to Client Dashboard */}

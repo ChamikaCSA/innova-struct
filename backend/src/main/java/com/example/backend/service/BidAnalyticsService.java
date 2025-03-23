@@ -440,7 +440,7 @@ public class BidAnalyticsService {
         List<Bid> currentPeriodBids = allBids.stream()
                 .filter(bid -> {
                     LocalDateTime bidDate = LocalDateTime.parse(bid.getCreatedAt(), formatter);
-                    return !bidDate.isBefore(currentPeriodStart) && !bidDate.isAfter(now);
+                    return bidDate.isAfter(currentPeriodStart) && bidDate.isBefore(now);
                 })
                 .collect(Collectors.toList());
 
@@ -448,37 +448,31 @@ public class BidAnalyticsService {
         List<Bid> previousPeriodBids = allBids.stream()
                 .filter(bid -> {
                     LocalDateTime bidDate = LocalDateTime.parse(bid.getCreatedAt(), formatter);
-                    return !bidDate.isBefore(previousPeriodStart) && !bidDate.isAfter(previousPeriodEnd);
+                    return bidDate.isAfter(previousPeriodStart) && bidDate.isBefore(previousPeriodEnd);
                 })
                 .collect(Collectors.toList());
 
         // Define categories based on company types
         List<String> categories = Arrays.asList("Commercial", "Residential", "Industrial");
+        List<Map<String, Object>> result = new ArrayList<>();
 
-        // Create result list
-        List<Map<String, Object>> resultList = new ArrayList<>();
-
-        // Process each category
+        // Calculate trends for each category
         for (String category : categories) {
+            long currentCount = countBidsByCompanyType(currentPeriodBids, category);
+            long previousCount = countBidsByCompanyType(previousPeriodBids, category);
+            double percentageChange = previousCount > 0
+                ? ((currentCount - previousCount) / (double) previousCount) * 100
+                : 0;
+
             Map<String, Object> categoryData = new HashMap<>();
             categoryData.put("category", category);
-
-            // Count current period bids for this category
-            long currentMonthBids = countBidsByCompanyType(currentPeriodBids, category);
-            categoryData.put("currentMonthBids", currentMonthBids);
-
-            // Count previous period bids for this category
-            long previousMonthBids = countBidsByCompanyType(previousPeriodBids, category);
-            categoryData.put("previousMonthBids", previousMonthBids);
-
-            // Calculate percentage change
-            double percentageChange = calculatePercentageChange(previousMonthBids, currentMonthBids);
-            categoryData.put("percentageChange", Math.round(percentageChange * 10) / 10.0); // Round to 1 decimal place
-
-            resultList.add(categoryData);
+            categoryData.put("currentMonthBids", currentCount);
+            categoryData.put("previousMonthBids", previousCount);
+            categoryData.put("percentageChange", Math.round(percentageChange * 10.0) / 10.0);
+            result.add(categoryData);
         }
 
-        return resultList;
+        return result;
     }
 
     /**

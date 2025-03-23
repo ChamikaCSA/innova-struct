@@ -55,14 +55,14 @@ const AdsSlideshow = () => {
   return (
     <div className="relative w-full bg-white rounded-xl shadow-lg overflow-hidden mb-4 sm:mb-8">
       <div className="relative h-[300px] sm:h-[400px] lg:h-[450px]">
-        <div 
+        <div
           className="absolute w-full h-full transition-transform duration-500 ease-in-out flex"
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
           {ads.map((ad) => (
             <div key={ad.id} className="min-w-full h-full">
-              <img 
-                src={ad.imageUrl} 
+              <img
+                src={ad.imageUrl}
                 alt={ad.title}
                 className="w-full h-[180px] sm:h-[250px] lg:h-[300px] object-cover"
               />
@@ -74,14 +74,14 @@ const AdsSlideshow = () => {
             </div>
           ))}
         </div>
-        
-        <button 
+
+        <button
           className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1 sm:p-2 rounded-full"
           onClick={prevSlide}
         >
           <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
         </button>
-        <button 
+        <button
           className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1 sm:p-2 rounded-full"
           onClick={nextSlide}
         >
@@ -106,7 +106,7 @@ const AdsSlideshow = () => {
       </div>
 
       <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200">
-        <div 
+        <div
           className="h-full bg-yellow-500 transition-all duration-500"
           style={{ width: `${(currentSlide + 1) * (100 / ads.length)}%` }}
         />

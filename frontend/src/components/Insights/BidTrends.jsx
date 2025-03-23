@@ -16,16 +16,21 @@ const BidTrends = () => {
       setLoading(true);
       try {
         const data = await analyticsService.getBidTrends(timeframe);
-        // Ensure data is an array before setting state
-        const processedData = Array.isArray(data) ? data : [];
+        // Ensure data is an array and properly formatted
+        const processedData = Array.isArray(data) ? data.map(item => ({
+          ...item,
+          currentMonthBids: parseInt(item.currentMonthBids) || 0,
+          previousMonthBids: parseInt(item.previousMonthBids) || 0,
+          percentageChange: parseFloat(item.percentageChange) || 0
+        })) : [];
         setBidData(processedData);
         setBidDataArray(processedData);
         setError(null);
       } catch (err) {
         console.error('Error fetching bid trends:', err);
         setError('Failed to load bid trend data. Please try again later.');
-        // Fallback to empty array if API fails
         setBidData([]);
+        setBidDataArray([]);
       } finally {
         setLoading(false);
       }
@@ -33,6 +38,38 @@ const BidTrends = () => {
 
     fetchBidTrends();
   }, [timeframe]);
+
+  const getTimeframeLabel = (timeframe) => {
+    switch (timeframe) {
+      case 'day':
+        return 'Current Week';
+      case 'week':
+        return 'Current Month';
+      case 'quarter':
+        return 'Current Quarter';
+      case 'year':
+        return 'Current Year';
+      case 'month':
+      default:
+        return 'Current Month';
+    }
+  };
+
+  const getPreviousTimeframeLabel = (timeframe) => {
+    switch (timeframe) {
+      case 'day':
+        return 'Previous Week';
+      case 'week':
+        return 'Previous Month';
+      case 'quarter':
+        return 'Previous Quarter';
+      case 'year':
+        return 'Previous Year';
+      case 'month':
+      default:
+        return 'Previous Month';
+    }
+  };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -45,10 +82,10 @@ const BidTrends = () => {
           <h3 className="font-semibold text-gray-900">{label}</h3>
           <div className="space-y-2 mt-2">
             <p className="text-sm text-gray-600">
-              Current Month: <span className="font-medium">{currentBids}</span>
+              {getTimeframeLabel(timeframe)}: <span className="font-medium">{currentBids}</span>
             </p>
             <p className="text-sm text-gray-600">
-              Previous Month: <span className="font-medium">{prevBids}</span>
+              {getPreviousTimeframeLabel(timeframe)}: <span className="font-medium">{prevBids}</span>
             </p>
             <p className="text-sm">
               Change:{' '}
@@ -99,8 +136,8 @@ const BidTrends = () => {
               value={timeframe}
               onChange={(e) => setTimeframe(e.target.value)}
             >
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
+              <option value="day">This Week</option>
+              <option value="week">This Month</option>
               <option value="quarter">This Quarter</option>
               <option value="year">This Year</option>
             </select>
@@ -157,7 +194,7 @@ const BidTrends = () => {
                   </div>
                 </div>
                 <div className="text-xs text-gray-500">
-                  Current month bids
+                  {getTimeframeLabel(timeframe)} bids
                 </div>
               </div>
             </div>
@@ -182,13 +219,13 @@ const BidTrends = () => {
               <Bar
                 dataKey="currentMonthBids"
                 fill="#EAB308"
-                name="Current Month"
+                name={getTimeframeLabel(timeframe)}
                 radius={[4, 4, 0, 0]}
               />
               <Bar
                 dataKey="previousMonthBids"
                 fill="#F59E0B"
-                name="Previous Month"
+                name={getPreviousTimeframeLabel(timeframe)}
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>

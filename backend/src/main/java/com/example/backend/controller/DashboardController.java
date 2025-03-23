@@ -393,4 +393,54 @@ public class DashboardController {
 
         return ResponseEntity.ok(limitedDeadlines);
     }
+
+    /**
+     * Get recent activity for company dashboard
+     * @param companyId ID of the company
+     * @param limit Number of recent activities to return
+     * @return List of recent activities
+     */
+    @GetMapping("/company/{companyId}/recent-activity")
+    public ResponseEntity<List<Map<String, Object>>> getCompanyRecentActivity(
+            @PathVariable String companyId,
+            @RequestParam(defaultValue = "5") int limit) {
+
+        // Get all bids for the company
+        List<Bid> companyBids = bidRepository.findByCompanyId(companyId);
+
+        // Sort by creation date (newest first)
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+        companyBids.sort((b1, b2) -> {
+            LocalDateTime date1 = LocalDateTime.parse(b1.getCreatedAt(), formatter);
+            LocalDateTime date2 = LocalDateTime.parse(b2.getCreatedAt(), formatter);
+            return date2.compareTo(date1);
+        });
+
+        // Take only the requested number of bids
+        List<Bid> recentBids = companyBids.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+
+        // Transform to response format
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Bid bid : recentBids) {
+            Map<String, Object> activityData = new HashMap<>();
+            activityData.put("id", bid.getId());
+            activityData.put("type", "bid");
+            activityData.put("status", bid.getStatus());
+            activityData.put("amount", bid.getAmount());
+            activityData.put("createdAt", bid.getCreatedAt());
+
+            // Get tender details
+            Tender tender = tenderRepository.findById(bid.getTenderId()).orElse(null);
+            if (tender != null) {
+                activityData.put("tenderTitle", tender.getTitle());
+                activityData.put("clientId", tender.getClientId());
+            }
+
+            result.add(activityData);
+        }
+
+        return ResponseEntity.ok(result);
+    }
 }
