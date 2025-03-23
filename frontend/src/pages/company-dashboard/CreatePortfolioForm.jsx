@@ -5,14 +5,12 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import userService from "../../services/userService";
 
-const CreatePortfolioForm = ({ onCancel }) => {
-  // Add navigate hook near the top of your component
+const CreatePortfolioForm = ({ onCancel, initialData, isEditing }) => {
   const navigate = useNavigate();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [activeStep, setActiveStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(initialData || {
     companyName: "",
     licenseNumber: "",
     shortDescription: "",
@@ -42,10 +40,8 @@ const CreatePortfolioForm = ({ onCancel }) => {
     email: "",
     phone: "",
     website: "",
-    // Removed linkedin field
   });
 
-  // Add this validation function after your state declarations
   const validateStep = (stepNumber) => {
     switch (stepNumber) {
       case 1: // Company Details
@@ -224,12 +220,27 @@ const CreatePortfolioForm = ({ onCancel }) => {
           ? {
               ...project,
               images: [...project.images, ...files],
+              newImages: [...(project.newImages || []), ...files],
             }
           : project
       ),
     }));
   };
-  // Add this function before the return statement
+
+  const handleRemoveImage = (projectIndex, imageIndex) => {
+    setFormData((prev) => ({
+      ...prev,
+      projects: prev.projects.map((project, i) =>
+        i === projectIndex
+          ? {
+              ...project,
+              images: project.images.filter((_, idx) => idx !== imageIndex),
+            }
+          : project
+      ),
+    }));
+  };
+
   const renderStep = () => {
     switch (activeStep) {
       case 1:
@@ -444,15 +455,50 @@ const CreatePortfolioForm = ({ onCancel }) => {
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Project Images
               </label>
+              {project.images && project.images.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
+                  {project.images.map((image, imgIndex) => (
+                    <div key={imgIndex} className="relative group">
+                      <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden bg-gray-100">
+                        {typeof image === 'string' ? (
+                          <img
+                            src={image}
+                            alt={`Project ${index + 1} image ${imgIndex + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`Project ${index + 1} image ${imgIndex + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index, imgIndex)}
+                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <input
                 type="file"
                 onChange={(e) => handleFileChange(e, index)}
                 multiple
                 accept="image/*"
-                className="mt-1 block w-full"
+                className="mt-1 block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-md file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-yellow-50 file:text-yellow-600
+                  hover:file:bg-yellow-100"
               />
             </div>
           </div>
@@ -649,12 +695,10 @@ const CreatePortfolioForm = ({ onCancel }) => {
   );
 
   const renderContact = () => {
-    // Add logging for debugging
     console.log("Contact form data:", {
       email: formData.email,
       phone: formData.phone,
       website: formData.website,
-      // Removed linkedin
     });
 
     return (
@@ -715,87 +759,83 @@ const CreatePortfolioForm = ({ onCancel }) => {
     try {
       const formDataObj = new FormData();
 
-      // Add project images
       formData.projects.forEach((project) => {
         project.images.forEach((image) => {
-          formDataObj.append("projectImages", image);
+          if (image instanceof File) {
+            formDataObj.append("projectImages", image);
+          }
         });
       });
 
-      // Add certificate images
       formData.certifications.forEach((cert) => {
-        if (cert.image) {
+        if (cert.image && cert.image instanceof File) {
           formDataObj.append("certificateImages", cert.image);
         }
       });
 
-      // Get the current logged-in user and fetch their complete data
       const currentUser = userService.getCurrentUser();
       if (!currentUser) {
         throw new Error("No logged-in user found");
       }
 
-      // Fetch complete user data to get companyId
       const completeUserData = await userService.getUserById(currentUser.id);
       if (!completeUserData || !completeUserData.companyId) {
         throw new Error("No company ID found for the logged-in user");
       }
 
-      // Create a clean copy of form data for JSON serialization
       const cleanFormData = {
         ...formData,
-        companyId: completeUserData.companyId, // Use companyId from complete user data
-        // Structure contact information as expected by the backend
+        companyId: completeUserData.companyId,
         contactInformation: {
           email: formData.email,
-          phoneNumber: formData.phone, // Note: changed from 'phone' to 'phoneNumber'
+          phoneNumber: formData.phone,
           website: formData.website,
         },
-        // Clear binary data
         projects: formData.projects.map((project) => ({
           ...project,
-          images: [],
+          images: project.images.map(image =>
+            typeof image === 'string' ? image : 'placeholder'
+          ),
         })),
         certifications: formData.certifications.map((cert) => ({
           ...cert,
-          image: null,
+          image: cert.image instanceof File ? null : cert.image,
         })),
       };
 
-      // Remove standalone contact fields since they're now in contactInformation
       delete cleanFormData.email;
       delete cleanFormData.phone;
       delete cleanFormData.website;
 
-      // Log the data being sent to verify contact info structure
-      console.log("Sending data:", cleanFormData);
-
       formDataObj.append("companyData", JSON.stringify(cleanFormData));
 
-      const response = await axios.post(
-        "http://localhost:8080/api/companies/portfolio",
-        formDataObj,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const endpoint = isEditing
+        ? `http://localhost:8080/api/companies/portfolio/${completeUserData.companyId}`
+        : "http://localhost:8080/api/companies/portfolio";
 
-      if (response.status === 201) {
-        const createdCompany = response.data;
-        console.log("Created company:", createdCompany);
-        navigate(`/company/home`);
+      const method = isEditing ? "PUT" : "POST";
+
+      const response = await axios({
+        method,
+        url: endpoint,
+        data: formDataObj,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.status === (isEditing ? 200 : 201)) {
+        const updatedCompany = response.data;
+        navigate(`/company/portfolio/${updatedCompany.id}`);
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert(`Error creating company portfolio: ${error.message}`);
+      alert(`Error ${isEditing ? "updating" : "creating"} company portfolio: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Update the handleNextStep function
   const handleNextStep = () => {
     const error = validateStep(activeStep);
     if (error) {
@@ -804,7 +844,7 @@ const CreatePortfolioForm = ({ onCancel }) => {
     }
 
     if (activeStep === steps.length) {
-      handleSubmit(); // Remove the event parameter since it's not needed here
+      handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
     }
@@ -820,7 +860,7 @@ const CreatePortfolioForm = ({ onCancel }) => {
           <ArrowLeft className="w-6 h-6 text-gray-600" />
         </button>
         <h1 className="text-2xl font-bold text-gray-900">
-          Create Company Portfolio
+          {isEditing ? "Edit" : "Create"} Company Portfolio
         </h1>
       </div>
 
@@ -882,6 +922,8 @@ const CreatePortfolioForm = ({ onCancel }) => {
 
 CreatePortfolioForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
+  initialData: PropTypes.object,
+  isEditing: PropTypes.bool.isRequired,
 };
 
 export default CreatePortfolioForm;

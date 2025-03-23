@@ -6,6 +6,7 @@ import com.example.backend.model.Project;
 import com.example.backend.model.Certification;
 import com.example.backend.repository.CompanyRepository;
 import com.example.backend.repository.CertificationRepository;
+import com.example.backend.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +25,9 @@ public class PortfolioService {
 
     @Autowired
     private CertificationRepository certificationRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -45,6 +49,14 @@ public class PortfolioService {
         company.setLocation(portfolioDTO.getLocation());
         company.setEmployees(portfolioDTO.getEmployeeCount());
         company.setServices(portfolioDTO.getServices());
+        company.setCidaGrading(portfolioDTO.getCidaGrading());
+        company.setEngineerCapacity(portfolioDTO.getEngineerCapacity());
+
+        // Save company first to ensure it has an ID
+        company = companyRepository.save(company);
+
+        // Delete existing projects if editing
+        projectRepository.deleteByCompanyId(company.getId());
 
         // Handle projects
         List<Project> projects = new ArrayList<>();
@@ -54,26 +66,34 @@ public class PortfolioService {
             project.setTitle(projectDTO.getName());
             project.setDescription(projectDTO.getDescription());
             project.setYear(Integer.parseInt(projectDTO.getCompletionYear()));
+            project.setCompany(company);
 
             // Handle project images
             if (projectDTO.getImages() != null && !projectDTO.getImages().isEmpty()) {
                 List<String> imageUrls = new ArrayList<>();
-                for (String imageName : projectDTO.getImages()) {
-                    if (projectImageIndex < projectImages.size()) {
+
+                // Keep existing image URLs
+                for (String image : projectDTO.getImages()) {
+                    if (!image.equals("placeholder")) {
+                        imageUrls.add(image);
+                    } else if (projectImageIndex < projectImages.size()) {
+                        // Store new image and get URL
                         String imageUrl = fileStorageService.storeFile(projectImages.get(projectImageIndex));
                         imageUrls.add(imageUrl);
                         projectImageIndex++;
                     }
                 }
-                project.setImage(String.join(",", imageUrls));
+                project.setImageUrls(String.join(",", imageUrls));
             }
 
+            // Save each project
+            project = projectRepository.save(project);
             projects.add(project);
         }
         company.setProjects(projects);
 
-        // Save company first to ensure it has an ID
-        company = companyRepository.save(company);
+        // Delete existing certifications if editing
+        certificationRepository.deleteByCompanyId(company.getId());
 
         // Handle certifications
         if (portfolioDTO.getCertifications() != null) {
@@ -85,7 +105,7 @@ public class PortfolioService {
                 certification.setOrganization(certDTO.getOrganization());
                 certification.setIssueDate(certDTO.getIssueDate());
                 certification.setExpiryDate(certDTO.getExpiryDate());
-                certification.setCompany(company); // Set the company reference
+                certification.setCompany(company);
 
                 // Handle certificate image
                 if (certImageIndex < certificateImages.size()) {

@@ -49,4 +49,36 @@ public class PortfolioController {
             return ResponseEntity.badRequest().body("Error creating portfolio: " + e.getMessage());
         }
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePortfolio(
+            @PathVariable String id,
+            @RequestParam("companyData") String companyDataJson,
+            @RequestParam(value = "projectImages", required = false) List<MultipartFile> projectImages,
+            @RequestParam(value = "certificateImages", required = false) List<MultipartFile> certificateImages) {
+        try {
+            // Convert JSON string to PortfolioDTO
+            PortfolioDTO portfolioDTO = objectMapper.readValue(companyDataJson, PortfolioDTO.class);
+
+            // Ensure the ID in the path matches the ID in the DTO
+            if (!id.equals(portfolioDTO.getCompanyId())) {
+                return ResponseEntity.badRequest().body("Company ID mismatch");
+            }
+
+            // Handle null lists
+            if (projectImages == null) {
+                projectImages = new ArrayList<>();
+            }
+            if (certificateImages == null) {
+                certificateImages = new ArrayList<>();
+            }
+
+            // Update portfolio
+            Company updatedCompany = portfolioService.createPortfolio(portfolioDTO, projectImages, certificateImages);
+
+            return ResponseEntity.ok(updatedCompany);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error updating portfolio: " + e.getMessage());
+        }
+    }
 }

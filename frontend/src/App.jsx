@@ -29,6 +29,7 @@ import ActiveBids from "./pages/CompanyTender/ActiveBids.jsx";
 import TenderAnalytics from "./pages/CompanyTender/TenderAnalytics.jsx";
 import ClientLogin from "./pages/Authentication/ClientLogin";
 import CompanyLogin from "./pages/Authentication/CompanyLogin";
+import CompanyPortfolioEdit from "./pages/company-dashboard/CompanyPortfolioEdit";
 
 const App = () => {
   return (
@@ -122,6 +123,22 @@ const App = () => {
             element={
               <ProtectedRoute allowedRole="COMPANY">
                 <CompanyPortfolio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/company/portfolio/:id"
+            element={
+              <ProtectedRoute allowedRole="COMPANY">
+                <CompanyPortfolio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/company/portfolio/:id/edit"
+            element={
+              <ProtectedRoute allowedRole="COMPANY">
+                <CompanyPortfolioEdit />
               </ProtectedRoute>
             }
           />

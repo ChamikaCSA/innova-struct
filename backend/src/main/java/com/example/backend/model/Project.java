@@ -1,21 +1,24 @@
 package com.example.backend.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+@Document(collection = "projects")
 public class Project {
+    @Id
     private String id;
-    private String image;
     private String title;
     private String description;
     private int year;
+    private String imageUrls; // Comma-separated URLs
+
+    @DBRef
+    @JsonBackReference
+    private Company company;
 
     public Project() {
-    }
-
-    public Project(String id, String image, String title, String description, int year) {
-        this.id = id;
-        this.image = image;
-        this.title = title;
-        this.description = description;
-        this.year = year;
     }
 
     public String getId() {
@@ -24,14 +27,6 @@ public class Project {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
     }
 
     public String getTitle() {
@@ -56,5 +51,21 @@ public class Project {
 
     public void setYear(int year) {
         this.year = year;
+    }
+
+    public String getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(String imageUrls) {
+        this.imageUrls = imageUrls;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
     }
 }

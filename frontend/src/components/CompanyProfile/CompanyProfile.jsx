@@ -5,10 +5,12 @@ import {
   Trophy, MapPin, Users, Calendar, Building2,
   Image as ImageIcon
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CompanyProfile = ({ company }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isClientView = location.pathname.includes('/client/');
 
   const renderStars = (rating) => {
     return (
@@ -107,8 +109,6 @@ const CompanyProfile = ({ company }) => {
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   );
@@ -406,7 +406,10 @@ const CompanyProfile = ({ company }) => {
           </div>
         </section>
       )}
-      <div className="flex gap-4 mt-6 justify-center">
+
+      {/* Contact and Quote buttons for client view */}
+      {isClientView && (
+        <div className="flex gap-4 mt-6 justify-center">
           <button
             onClick={() => navigate(`/quote-request/${company.id}`)}
             className="btn btn-primary"
@@ -429,6 +432,7 @@ const CompanyProfile = ({ company }) => {
             Contact Company
           </button>
         </div>
+      )}
     </div>
   );
 };

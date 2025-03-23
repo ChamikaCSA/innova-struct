@@ -22,6 +22,8 @@ public class Company {
     private String coverImage;
     private String profileIcon;
     private double rating;
+    @DBRef
+    @JsonManagedReference
     private List<Project> projects;
     private List<Review> reviews;
     private TrackRecord trackRecord;
@@ -37,6 +39,8 @@ public class Company {
     private String website;
     private String annualRevenue;
     private String fundingSources;
+    private String cidaGrading;
+    private Integer engineerCapacity;
 
     private String createdAt;
     private String updatedAt;
@@ -250,5 +254,21 @@ public class Company {
 
     public void setFundingSources(String fundingSources) {
         this.fundingSources = fundingSources;
+    }
+
+    public String getCidaGrading() {
+        return cidaGrading;
+    }
+
+    public void setCidaGrading(String cidaGrading) {
+        this.cidaGrading = cidaGrading;
+    }
+
+    public Integer getEngineerCapacity() {
+        return engineerCapacity;
+    }
+
+    public void setEngineerCapacity(Integer engineerCapacity) {
+        this.engineerCapacity = engineerCapacity;
     }
 }

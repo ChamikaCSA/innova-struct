@@ -29,6 +29,17 @@ public class CompanyController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{id}/has-portfolio")
+    public ResponseEntity<Boolean> hasPortfolio(@PathVariable String id) {
+        return companyService.getCompanyById(id)
+                .map(company -> ResponseEntity.ok(
+                    company.getShortDescription() != null &&
+                    company.getServices() != null &&
+                    !company.getServices().isEmpty()
+                ))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/type/{type}")
     public ResponseEntity<List<Company>> getCompaniesByType(@PathVariable String type) {
         return ResponseEntity.ok(companyService.getCompaniesByType(type));

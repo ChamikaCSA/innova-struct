@@ -17,6 +17,8 @@ public class PortfolioDTO {
     private String fundingSources;
     private List<CertificationDTO> certifications;
     private Map<String, String> contactInformation;
+    private String cidaGrading;
+    private Integer engineerCapacity;
 
     // Getters and Setters
     public String getCompanyId() {
@@ -121,6 +123,22 @@ public class PortfolioDTO {
 
     public void setContactInformation(Map<String, String> contactInformation) {
         this.contactInformation = contactInformation;
+    }
+
+    public String getCidaGrading() {
+        return cidaGrading;
+    }
+
+    public void setCidaGrading(String cidaGrading) {
+        this.cidaGrading = cidaGrading;
+    }
+
+    public Integer getEngineerCapacity() {
+        return engineerCapacity;
+    }
+
+    public void setEngineerCapacity(Integer engineerCapacity) {
+        this.engineerCapacity = engineerCapacity;
     }
 
     public static class ProjectDTO {
