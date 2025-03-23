@@ -52,9 +52,9 @@ const analyticsService = {
   },
 
   // Get bid trends data by category
-  getBidTrends: async (companyId, timeframe = 'month') => {
+  getBidTrends: async (timeframe = 'month') => {
     try {
-      const response = await api.get(`/analytics/bids/trends/${companyId}?timeframe=${timeframe}`);
+      const response = await api.get(`/analytics/bids/trends?timeframe=${timeframe}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -65,6 +65,36 @@ const analyticsService = {
   getProjectTimelines: async (projectType) => {
     try {
       const response = await api.get(`/analytics/bids/projects/timelines?type=${projectType}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get client preferences data
+  getClientPreferences: async () => {
+    try {
+      const response = await api.get('/analytics/bids/client-preferences');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get tender activity data
+  getTenderActivity: async () => {
+    try {
+      const response = await api.get('/analytics/bids/tender-activity');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get bid analysis data by category
+  getBidAnalytics: async (companyId) => {
+    try {
+      const response = await api.get(`/analytics/bids/analysis/${companyId}`);
       return response.data;
     } catch (error) {
       throw error;

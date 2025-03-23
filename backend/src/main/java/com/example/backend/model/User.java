@@ -12,6 +12,7 @@ public class User {
     private String name;
     private String role; // "CLIENT" or "COMPANY"
     private String profileImage;
+    private String phone;
     private String createdAt;
     private String updatedAt;
     private String companyId; // ID of the associated company for company users
@@ -72,6 +73,14 @@ public class User {
 
     public void setProfileImage(String profileImage) {
         this.profileImage = profileImage;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String getCreatedAt() {

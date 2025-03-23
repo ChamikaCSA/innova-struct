@@ -2,7 +2,8 @@ import PropTypes from 'prop-types';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import {
   Star, History, TrendingUp, Wrench, Shield,
-  Trophy, MapPin, Users, Calendar
+  Trophy, MapPin, Users, Calendar, Building2,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -49,22 +50,31 @@ const CompanyProfile = ({ company }) => {
   // Company Details Section
   const CompanyHeader = () => (
     <div className="card bg-base-100 shadow-xl mb-8">
-
       <div className="relative">
-        <img
-          src={company.coverImage || defaultCoverImage}
-          alt={`${company.name} cover`}
-          className="w-full h-48 object-cover rounded-t-lg"
-        />
+        {company.coverImage ? (
+          <img
+            src={company.coverImage}
+            alt={`${company.name} cover`}
+            className="w-full h-48 object-cover rounded-t-lg"
+          />
+        ) : (
+          <div className="w-full h-48 bg-gray-50 rounded-t-lg" />
+        )}
 
-        {/* Update this avatar/icon section */}
+        {/* Profile Icon/Avatar section */}
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
           <div className="w-40 h-40 rounded-full ring-2 ring-yellow-600 ring-offset-base-100 ring-offset-2 bg-white overflow-hidden shadow-md">
-            <img
-              src={company.profileIcon || defaultProfileIcon}
-              alt={`${company.name} logo`}
-              className="w-full h-full object-cover"
-            />
+            {company.profileIcon ? (
+              <img
+                src={company.profileIcon}
+                alt={`${company.name} logo`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-yellow-50 flex items-center justify-center">
+                <Building2 className="w-20 h-20 text-yellow-600" />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -112,22 +122,44 @@ const CompanyProfile = ({ company }) => {
         <div className="bg-yellow-50 p-6 rounded-lg shadow">
           <h3 className="text-2xl font-bold mb-4">Experience: {company.trackRecord.yearsOfExperience} years</h3>
           <div className="grid md:grid-cols-2 gap-6">
-            {company.trackRecord.notableProjects.map((project, idx) => (
-              <div key={idx} className="bg-white p-4 rounded-lg shadow">
-                <img src={project.image} alt={project.title} className="w-full h-48 object-cover rounded mb-3" />
-                <h4 className="text-lg font-semibold">{project.title}</h4>
-                <p className="text-gray-600">{project.description}</p>
+            {company.trackRecord.notableProjects.length > 0 ? (
+              company.trackRecord.notableProjects.map((project, idx) => (
+                <div key={idx} className="bg-white p-4 rounded-lg shadow">
+                  <div className="w-full h-48 mb-3 rounded overflow-hidden bg-gray-100">
+                    {project.image ? (
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-16 h-16 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <h4 className="text-lg font-semibold">{project.title}</h4>
+                  <p className="text-gray-600">{project.description}</p>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-8 text-gray-500">
+                No notable projects available at this time.
               </div>
-            ))}
+            )}
           </div>
           <div className="mt-6">
             <h4 className="text-lg font-semibold mb-3">Client Satisfaction</h4>
             <p className="text-3xl font-bold text-yellow-600 mb-4">
               {company.trackRecord.clientSatisfaction.averageRating}/5
             </p>
-            {company.trackRecord.clientSatisfaction.positiveFeedback.map((feedback, idx) => (
-              <p key={idx} className="flex items-center text-green-600 mb-2">✓ {feedback}</p>
-            ))}
+            {company.trackRecord.clientSatisfaction.positiveFeedback.length > 0 ? (
+              company.trackRecord.clientSatisfaction.positiveFeedback.map((feedback, idx) => (
+                <p key={idx} className="flex items-center text-green-600 mb-2">✓ {feedback}</p>
+              ))
+            ) : (
+              <p className="text-gray-500">No feedback available at this time.</p>
+            )}
           </div>
         </div>
       )
@@ -147,7 +179,9 @@ const CompanyProfile = ({ company }) => {
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow">
                   <h4 className="font-semibold">Growth Rate</h4>
-                  <p className="text-green-600">{company.financialStability.growthRate}</p>
+                  <p className={company.financialStability.growthRate === 'N/A' ? 'text-gray-500' : 'text-green-600'}>
+                    {company.financialStability.growthRate}
+                  </p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow">
                   <h4 className="font-semibold">Credit Rating</h4>
@@ -176,23 +210,35 @@ const CompanyProfile = ({ company }) => {
             <div>
               <h3 className="text-xl font-bold mb-4">Primary Services</h3>
               <div className="space-y-2">
-                {company.servicesOffered.primaryServices.map((service, idx) => (
-                  <div key={idx} className="bg-white p-3 rounded-lg shadow flex items-center">
-                    <Wrench className="w-4 h-4 text-yellow-600 mr-2" />
-                    {service}
+                {company.servicesOffered.primaryServices.length > 0 ? (
+                  company.servicesOffered.primaryServices.map((service, idx) => (
+                    <div key={idx} className="bg-white p-3 rounded-lg shadow flex items-center">
+                      <Wrench className="w-4 h-4 text-yellow-600 mr-2" />
+                      {service}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No primary services listed at this time.
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <div>
               <h3 className="text-xl font-bold mb-4">Specialized Services</h3>
               <div className="space-y-2">
-                {company.servicesOffered.specializedServices.map((service, idx) => (
-                  <div key={idx} className="bg-white p-3 rounded-lg shadow flex items-center">
-                    <Star className="w-4 h-4 text-yellow-600 mr-2" />
-                    {service}
+                {company.servicesOffered.specializedServices.length > 0 ? (
+                  company.servicesOffered.specializedServices.map((service, idx) => (
+                    <div key={idx} className="bg-white p-3 rounded-lg shadow flex items-center">
+                      <Star className="w-4 h-4 text-yellow-600 mr-2" />
+                      {service}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No specialized services listed at this time.
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -206,21 +252,33 @@ const CompanyProfile = ({ company }) => {
         <div className="bg-yellow-50 p-6 rounded-lg shadow">
           <h3 className="text-xl font-bold mb-4">Industry Certifications</h3>
           <div className="grid md:grid-cols-2 gap-4 mb-6">
-            {company.certificationsCompliance.industryCertifications.map((cert, idx) => (
-              <div key={idx} className="bg-white p-4 rounded-lg shadow">
-                <h4 className="font-semibold text-lg mb-2">{cert.certification}</h4>
-                <p className="text-gray-600">{cert.description}</p>
+            {company.certificationsCompliance.industryCertifications.length > 0 ? (
+              company.certificationsCompliance.industryCertifications.map((cert, idx) => (
+                <div key={idx} className="bg-white p-4 rounded-lg shadow">
+                  <h4 className="font-semibold text-lg mb-2">{cert.certification}</h4>
+                  <p className="text-gray-600">{cert.description}</p>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-8 text-gray-500">
+                No industry certifications available at this time.
               </div>
-            ))}
+            )}
           </div>
           <h3 className="text-xl font-bold mb-4">Safety Standards</h3>
           <div className="space-y-2">
-            {company.certificationsCompliance.safetyStandards.map((standard, idx) => (
-              <div key={idx} className="bg-white p-3 rounded-lg shadow flex items-center">
-                <Shield className="w-4 h-4 text-yellow-600 mr-2" />
-                {standard}
+            {company.certificationsCompliance.safetyStandards.length > 0 ? (
+              company.certificationsCompliance.safetyStandards.map((standard, idx) => (
+                <div key={idx} className="bg-white p-3 rounded-lg shadow flex items-center">
+                  <Shield className="w-4 h-4 text-yellow-600 mr-2" />
+                  {standard}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                No safety standards listed at this time.
               </div>
-            ))}
+            )}
           </div>
         </div>
       )
@@ -234,29 +292,58 @@ const CompanyProfile = ({ company }) => {
             <div>
               <h3 className="text-xl font-bold mb-4">Major Awards</h3>
               <div className="space-y-4">
-                {company.awardsRecognitions.majorAwards.map((award, idx) => (
-                  <div key={idx} className="bg-white p-4 rounded-lg shadow">
-                    <div className="flex items-center mb-2">
-                      <Trophy className="w-6 h-6 text-yellow-600 mr-2" />
-                      <h4 className="font-semibold text-lg">{award.title}</h4>
+                {company.awardsRecognitions.majorAwards.length > 0 ? (
+                  company.awardsRecognitions.majorAwards.map((award, idx) => (
+                    <div key={idx} className="bg-white p-4 rounded-lg shadow">
+                      <div className="flex items-center mb-2">
+                        <Trophy className="w-6 h-6 text-yellow-600 mr-2" />
+                        <h4 className="font-semibold text-lg">{award.title}</h4>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Awarded by {award.organization} ({award.year})
-                    </p>
-                    <p className="text-gray-700">{award.reason}</p>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No major awards listed at this time.
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <div>
               <h3 className="text-xl font-bold mb-4">Industry Recognition</h3>
-              <div className="space-y-2">
-                {company.awardsRecognitions.mediaFeatures.map((feature, idx) => (
-                  <div key={idx} className="bg-white p-3 rounded-lg shadow flex items-center">
-                    <Star className="w-4 h-4 text-yellow-600 mr-2" />
-                    {feature}
+              <div className="space-y-4">
+                {company.awardsRecognitions.industryRecognition.length > 0 ? (
+                  company.awardsRecognitions.industryRecognition.map((recognition, idx) => (
+                    <div key={idx} className="bg-white p-4 rounded-lg shadow">
+                      <div className="flex items-center mb-2">
+                        <Trophy className="w-6 h-6 text-yellow-600 mr-2" />
+                        <h4 className="font-semibold text-lg">{recognition.title}</h4>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No industry recognition listed at this time.
                   </div>
-                ))}
+                )}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold mb-4">Media Features</h3>
+              <div className="space-y-4">
+                {company.awardsRecognitions.mediaFeatures.length > 0 ? (
+                  company.awardsRecognitions.mediaFeatures.map((feature, idx) => (
+                    <div key={idx} className="bg-white p-4 rounded-lg shadow">
+                      <div className="flex items-center mb-2">
+                        <Trophy className="w-6 h-6 text-yellow-600 mr-2" />
+                        <h4 className="font-semibold text-lg">{feature.title}</h4>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No media features listed at this time.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -326,7 +413,19 @@ const CompanyProfile = ({ company }) => {
           >
             Request Quote
           </button>
-          <button className="btn btn-outline">
+          <button
+            onClick={() => {
+              if (company.contactInfo?.email) {
+                window.location.href = `mailto:${company.contactInfo.email}`;
+              } else if (company.contactInfo?.phone) {
+                window.location.href = `tel:${company.contactInfo.phone}`;
+              } else {
+                // If no contact info is available, show a message
+                alert('Contact information is not available for this company. Please use the quote request form instead.');
+              }
+            }}
+            className="btn btn-outline"
+          >
             Contact Company
           </button>
         </div>
@@ -338,13 +437,18 @@ CompanyProfile.propTypes = {
   company: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     name: PropTypes.string.isRequired,
-    profileIcon: PropTypes.string.isRequired,
-    coverImage: PropTypes.string.isRequired,
+    profileIcon: PropTypes.string,
+    coverImage: PropTypes.string,
     shortDescription: PropTypes.string.isRequired,
     rating: PropTypes.number.isRequired,
     location: PropTypes.string.isRequired,
     employees: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     established: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    contactInfo: PropTypes.shape({
+      email: PropTypes.string,
+      phone: PropTypes.string,
+      website: PropTypes.string
+    }),
     reviews: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,

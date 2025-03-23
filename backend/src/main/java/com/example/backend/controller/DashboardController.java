@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.model.Bid;
 import com.example.backend.model.Tender;
 import com.example.backend.repository.BidRepository;
+import com.example.backend.repository.CompanyRepository;
 import com.example.backend.repository.TenderRepository;
 import com.example.backend.service.BidAnalyticsService;
 import com.example.backend.service.TenderService;
@@ -31,6 +32,9 @@ public class DashboardController {
 
     @Autowired
     private TenderService tenderService;
+
+    @Autowired
+    private CompanyRepository companyRepository;
 
     /**
      * Get summary statistics for client dashboard
@@ -75,6 +79,9 @@ public class DashboardController {
                 .filter(bid -> "accepted".equals(bid.getStatus()))
                 .count();
         result.put("acceptedBids", acceptedBids);
+
+        // Count total companies
+        result.put("totalCompanies", companyRepository.count());
 
         return ResponseEntity.ok(result);
     }
@@ -321,5 +328,69 @@ public class DashboardController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(topCompanies);
+    }
+
+    @GetMapping("/company/{companyId}/upcoming-deadlines")
+    public ResponseEntity<List<Map<String, Object>>> getCompanyUpcomingDeadlines(
+            @PathVariable String companyId,
+            @RequestParam(defaultValue = "5") int limit) {
+
+        // Get all bids for the company
+        List<Bid> companyBids = bidRepository.findByCompanyId(companyId);
+
+        // Get current date
+        LocalDateTime now = LocalDateTime.now();
+
+        // Transform bids to deadline information
+        List<Map<String, Object>> deadlines = new ArrayList<>();
+
+        for (Bid bid : companyBids) {
+            // Only include active bids
+            if ("accepted".equals(bid.getStatus())) {
+                // Get tender details
+                Optional<Tender> tender = tenderRepository.findById(bid.getTenderId());
+                if (tender.isPresent()) {
+                    Tender tenderData = tender.get();
+
+                    // Parse the proposed deadline
+                    LocalDateTime deadline = LocalDateTime.parse(bid.getProposedDeadline(), DateTimeFormatter.ISO_DATE_TIME);
+
+                    // Only include future deadlines
+                    if (deadline.isAfter(now)) {
+                        Map<String, Object> deadlineInfo = new HashMap<>();
+                        deadlineInfo.put("id", bid.getId());
+                        deadlineInfo.put("project", tenderData.getTitle());
+                        deadlineInfo.put("deadline", bid.getProposedDeadline());
+
+                        // Calculate days left
+                        long daysLeft = java.time.Duration.between(now, deadline).toDays();
+                        deadlineInfo.put("daysLeft", daysLeft);
+
+                        // Calculate completion percentage (simplified)
+                        LocalDateTime startDate = LocalDateTime.parse(tenderData.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+                        long totalDays = java.time.Duration.between(startDate, deadline).toDays();
+                        long elapsedDays = java.time.Duration.between(startDate, now).toDays();
+                        int completion = (int) ((elapsedDays * 100) / totalDays);
+                        deadlineInfo.put("completion", Math.min(100, Math.max(0, completion)));
+
+                        deadlines.add(deadlineInfo);
+                    }
+                }
+            }
+        }
+
+        // Sort by deadline (closest first)
+        deadlines.sort((a, b) -> {
+            LocalDateTime deadlineA = LocalDateTime.parse((String) a.get("deadline"), DateTimeFormatter.ISO_DATE_TIME);
+            LocalDateTime deadlineB = LocalDateTime.parse((String) b.get("deadline"), DateTimeFormatter.ISO_DATE_TIME);
+            return deadlineA.compareTo(deadlineB);
+        });
+
+        // Limit the number of results
+        List<Map<String, Object>> limitedDeadlines = deadlines.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(limitedDeadlines);
     }
 }

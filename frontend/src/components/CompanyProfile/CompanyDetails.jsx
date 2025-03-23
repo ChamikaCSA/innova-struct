@@ -1,14 +1,33 @@
 // src/components/CompanyProfile/CompanyDetails.jsx
-import PropTypes from 'prop-types'; 
+import PropTypes from 'prop-types';
+import { Building2 } from 'lucide-react';
 
 const CompanyDetails = ({ company }) => {
   return (
     <div className="card">
       <figure className="relative">
-        <img src={company.coverImage} alt={company.name} className="w-full h-80 object-cover rounded-lg" />
+        {company.coverImage ? (
+          <img
+            src={company.coverImage}
+            alt={company.name}
+            className="w-full h-80 object-cover rounded-lg"
+          />
+        ) : (
+          <div className="w-full h-80 bg-gray-50 rounded-lg" />
+        )}
         <div className="avatar absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
           <div className="w-48 h-48 rounded-full ring-4 ring-primary ring-offset-base-100 ring-offset-4 bg-white shadow-2xl border-4 border-white">
-            <img src={company.profileIcon} alt={company.name + ' Logo'} className="object-cover" />
+            {company.profileIcon ? (
+              <img
+                src={company.profileIcon}
+                alt={company.name + ' Logo'}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-yellow-50 flex items-center justify-center">
+                <Building2 className="w-24 h-24 text-yellow-600" />
+              </div>
+            )}
           </div>
         </div>
       </figure>
@@ -17,7 +36,7 @@ const CompanyDetails = ({ company }) => {
         <p className="text-gray-600">{company.license}</p>
         <p>{company.description}</p>
         <div className="mt-4 space-x-2">
-          <div className="badge badge-outline">Established: {company.established}</div> 
+          <div className="badge badge-outline">Established: {company.established}</div>
           <div className="badge badge-outline">Location: {company.location}</div>
           <div className="badge badge-outline">Employees: {company.employees}</div>
         </div>
@@ -44,6 +63,6 @@ CompanyDetails.propTypes = {
     profileIcon: PropTypes.string.isRequired,
   }).isRequired,
 };
-  
+
 export default CompanyDetails;
 

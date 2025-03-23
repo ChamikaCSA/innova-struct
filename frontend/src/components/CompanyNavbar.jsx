@@ -13,6 +13,7 @@ import {
   LineChart,
 } from "lucide-react";
 import userService from '../services/userService';
+import companyService from '../services/companyService';
 
 // Helper component for nav items with PropTypes
 const NavItem = ({ href, icon, text, isMinimized }) => {
@@ -60,7 +61,21 @@ function CompanyNavbar() {
     // Get current user's name
     const currentUser = userService.getCurrentUser();
     if (currentUser) {
-      setCompanyName(currentUser.name);
+      // Fetch company data to get the company name
+      const fetchCompanyData = async () => {
+        try {
+          const userDetails = await userService.getUserById(currentUser.id);
+          if (userDetails && userDetails.companyId) {
+            const companyData = await companyService.getCompanyById(userDetails.companyId);
+            if (companyData) {
+              setCompanyName(companyData.name);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching company data:', error);
+        }
+      };
+      fetchCompanyData();
     }
 
     // Handle responsive behavior
@@ -94,7 +109,7 @@ function CompanyNavbar() {
       <div className="px-6 py-4 border-b border-yellow-300 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <img src="/assets/Logo.png" alt="Logo" className="w-9 h-10.5 -translate-y-0.5" />
-          {!isMinimized && <h2 className="text-2xl font-bold">AppName</h2>}
+          {!isMinimized && <h2 className="text-2xl font-bold">InnovaStruct</h2>}
         </div>
         <button
           onClick={toggleMinimize}

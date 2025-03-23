@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building, Star, MapPin, Activity, Users } from 'lucide-react';
+import { Building, Star, MapPin, Activity, Users, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import companyService from '../../services/companyService';
 
@@ -45,20 +45,23 @@ const ContractorsList = () => {
         {topContractors.map((contractor) => (
           <Link
             key={contractor.id}
-            to={`/client/company/${contractor.id}`}
+            to={`/client/companies/${contractor.id}`}
             className="block hover:bg-gray-50 transition-colors"
           >
             <div className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                  <img
-                    src={contractor.profileIcon}
-                    alt={contractor.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = '/assets/company-placeholder.png';
-                    }}
-                  />
+                  {contractor.profileIcon ? (
+                    <img
+                      src={contractor.profileIcon}
+                      alt={contractor.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-yellow-50 flex items-center justify-center">
+                      <Building2 className="w-8 h-8 text-yellow-600" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-grow">
                   <div className="flex items-start justify-between">

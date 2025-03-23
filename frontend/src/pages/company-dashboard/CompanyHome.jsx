@@ -8,16 +8,144 @@ import {
 } from 'lucide-react';
 import CompanyNavbar from '../../components/CompanyNavbar';
 import userService from '../../services/userService';
+import companyService from '../../services/companyService';
 
 const CompanyHome = () => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [companyName, setCompanyName] = useState('');
+  const [statCards, setStatCards] = useState([
+    {
+      label: 'Active Projects',
+      value: '0',
+      trend: '0',
+      trendUp: true
+    },
+    {
+      label: 'Pending Quotes',
+      value: '0',
+      trend: '0',
+      trendUp: true
+    },
+    {
+      label: 'Project Completion',
+      value: '0%',
+      trend: '0%',
+      trendUp: true
+    },
+    {
+      label: 'Client Satisfaction',
+      value: '0',
+      trend: '0',
+      trendUp: true
+    },
+  ]);
+
+  const [mainCards, setMainCards] = useState([
+    {
+      title: 'Project Management',
+      icon: <Building size={48} />,
+      description: 'Manage all your active and upcoming construction projects.',
+      link: '/company/projects',
+      color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
+      stats: '0 active, 0 pending'
+    },
+    {
+      title: 'Quote Requests',
+      icon: <FileText size={48} />,
+      description: 'Review new requests for quotes and send proposals.',
+      link: '/company/tender',
+      color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
+      stats: '0 new requests',
+      badge: {
+        text: 'New',
+        count: 0
+      }
+    }
+  ]);
+
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
 
   useEffect(() => {
     // Get current user's name
     const currentUser = userService.getCurrentUser();
     if (currentUser) {
-      setCompanyName(currentUser.name);
+      // Fetch company data to get the company name and stats
+      const fetchCompanyData = async () => {
+        try {
+          const userDetails = await userService.getUserById(currentUser.id);
+          if (userDetails && userDetails.companyId) {
+            const [companyData, dashboardStats, deadlines] = await Promise.all([
+              companyService.getCompanyById(userDetails.companyId),
+              companyService.getCompanyDashboardStats(userDetails.companyId),
+              companyService.getCompanyUpcomingDeadlines(userDetails.companyId)
+            ]);
+
+            if (companyData) {
+              setCompanyName(companyData.name);
+            }
+
+            if (dashboardStats) {
+              setStatCards([
+                {
+                  label: 'Active Projects',
+                  value: dashboardStats.activeProjects.toString(),
+                  trend: dashboardStats.activeProjects > 0 ? '+' + dashboardStats.activeProjects : '0',
+                  trendUp: dashboardStats.activeProjects > 0
+                },
+                {
+                  label: 'Pending Quotes',
+                  value: dashboardStats.pendingQuotes.toString(),
+                  trend: dashboardStats.pendingQuotes > 0 ? '+' + dashboardStats.pendingQuotes : '0',
+                  trendUp: dashboardStats.pendingQuotes > 0
+                },
+                {
+                  label: 'Project Completion',
+                  value: `${Math.round(dashboardStats.projectCompletion)}%`,
+                  trend: `${Math.round(dashboardStats.projectCompletion)}%`,
+                  trendUp: dashboardStats.projectCompletion > 50
+                },
+                {
+                  label: 'Client Satisfaction',
+                  value: dashboardStats.clientSatisfaction.toFixed(1),
+                  trend: dashboardStats.clientSatisfaction > 8 ? '+0.5' : '-0.1',
+                  trendUp: dashboardStats.clientSatisfaction > 8
+                }
+              ]);
+
+              // Update main cards with real data
+              setMainCards([
+                {
+                  title: 'Project Management',
+                  icon: <Building size={48} />,
+                  description: 'Manage all your active and upcoming construction projects.',
+                  link: '/company/projects',
+                  color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
+                  stats: `${dashboardStats.activeProjects} active, ${dashboardStats.pendingQuotes} pending`
+                },
+                {
+                  title: 'Quote Requests',
+                  icon: <FileText size={48} />,
+                  description: 'Review new requests for quotes and send proposals.',
+                  link: '/company/tender',
+                  color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
+                  stats: `${dashboardStats.pendingQuotes} new requests`,
+                  badge: {
+                    text: 'New',
+                    count: dashboardStats.pendingQuotes
+                  }
+                }
+              ]);
+            }
+
+            if (deadlines) {
+              setUpcomingDeadlines(deadlines);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching company data:', error);
+        }
+      };
+      fetchCompanyData();
     }
 
     const handleSidebarStateChange = (event) => {
@@ -30,58 +158,6 @@ const CompanyHome = () => {
     };
   }, []);
 
-  // Company stats
-  const statCards = [
-    {
-      label: 'Active Projects',
-      value: '8',
-      trend: '+2',
-      trendUp: true
-    },
-    {
-      label: 'Pending Quotes',
-      value: '12',
-      trend: '+5',
-      trendUp: true
-    },
-    {
-      label: 'Project Completion',
-      value: '87%',
-      trend: '+3%',
-      trendUp: true
-    },
-    {
-      label: 'Client Satisfaction',
-      value: '4.8',
-      trend: '-0.1',
-      trendUp: false
-    },
-  ];
-
-  // Main action cards
-  const mainCards = [
-    {
-      title: 'Project Management',
-      icon: <Building size={48} />,
-      description: 'Manage all your active and upcoming construction projects.',
-      link: '/company/projects',
-      color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
-      stats: '8 active, 3 pending'
-    },
-    {
-      title: 'Quote Requests',
-      icon: <FileText size={48} />,
-      description: 'Review new requests for quotes and send proposals.',
-      link: '/company/tender',
-      color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
-      stats: '12 new requests',
-      badge: {
-        text: 'New',
-        count: 5
-      }
-    }
-  ];
-
   // Quick action tiles
   const quickActionTiles = [
     {
@@ -90,7 +166,6 @@ const CompanyHome = () => {
       description: 'Manage client relationships and communications.',
       link: '/company/portfolio',
       color: 'bg-amber-400',
-      count: 24
     },
     {
       title: 'Tender',
@@ -121,31 +196,6 @@ const CompanyHome = () => {
     { id: 2, text: 'Project "Central Tower Foundation" milestone completed', time: '2 hours ago', icon: <CheckCircle /> },
     { id: 3, text: 'Material delivery for "Solar-Powered Apartment" delayed', time: 'Yesterday', icon: <AlertTriangle /> },
     { id: 4, text: 'Client meeting scheduled with Kamal Perera', time: 'Yesterday', icon: <Calendar /> },
-  ];
-
-  // Upcoming deadlines
-  const upcomingDeadlines = [
-    {
-      id: 1,
-      project: 'Colombo Luxury Apartments',
-      deadline: 'August 15, 2023',
-      daysLeft: 3,
-      completion: 85
-    },
-    {
-      id: 2,
-      project: 'Modern Office Complex',
-      deadline: 'September 5, 2023',
-      daysLeft: 24,
-      completion: 62
-    },
-    {
-      id: 3,
-      project: 'Eco-Friendly Shopping Mall',
-      deadline: 'August 23, 2023',
-      daysLeft: 11,
-      completion: 40
-    }
   ];
 
   return (
@@ -239,7 +289,7 @@ const CompanyHome = () => {
                           <h3 className="font-medium text-gray-800">{deadline.project}</h3>
                           <div className="flex items-center mt-1">
                             <Clock className="w-4 h-4 text-gray-400 mr-1" />
-                            <span className="text-sm text-gray-500">{deadline.deadline}</span>
+                            <span className="text-sm text-gray-500">{new Date(deadline.deadline).toLocaleDateString()}</span>
                             <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
                               deadline.daysLeft <= 7 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
                             }`}>
@@ -261,6 +311,11 @@ const CompanyHome = () => {
                       </div>
                     </li>
                   ))}
+                  {upcomingDeadlines.length === 0 && (
+                    <li className="p-5 text-center text-gray-500">
+                      No upcoming deadlines
+                    </li>
+                  )}
                 </ul>
               </div>
 

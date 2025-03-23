@@ -114,7 +114,7 @@ const Home = () => {
       description: 'Browse trusted home builders to bring your dream house to life.',
       link: '/client/companies',
       color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
-      stats: `${dashboardData.totalBids} active bids`
+      stats: `${dashboardData.totalCompanies || 0} builders`
     },
     {
       title: 'Request a Quote',
@@ -122,7 +122,7 @@ const Home = () => {
       description: 'Submit your project details and receive detailed quotes from top builders.',
       link: '/client/tender',
       color: 'bg-gradient-to-r from-yellow-500 to-amber-400',
-      stats: `${dashboardData.activeTenders} active tenders`,
+      stats: `${dashboardData.activeTenders} quotes`,
       action: {
         icon: <Plus size={24} />,
         label: 'Request Quote',

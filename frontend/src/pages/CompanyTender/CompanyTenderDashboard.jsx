@@ -27,56 +27,57 @@ const CompanyTenderDashboard = () => {
     averageBudget: 0
   });
 
-  // Fetch tenders from API
-  useEffect(() => {
-    const fetchTenders = async () => {
-      try {
-        const currentUser = userService.getCurrentUser();
-        if (!currentUser || currentUser.role !== 'COMPANY') {
-          navigate('/company/login');
-          return;
-        }
-
-        setLoading(true);
-        const data = await tenderService.getAllTenders();
-
-        // Add priority based on deadline proximity
-        const tendersWithPriority = data.map(tender => {
-          const deadlineDate = new Date(tender.deadline);
-          const today = new Date();
-          const daysLeft = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-
-          let priority = 'medium';
-          if (daysLeft <= 5) priority = 'hot';
-          else if (daysLeft <= 10) priority = 'high';
-
-          return {
-            ...tender,
-            priority,
-            daysLeft: daysLeft > 0 ? daysLeft : 0
-          };
-        });
-
-        setTenders(tendersWithPriority);
-        setFilteredTenders(tendersWithPriority);
-
-        // Calculate stats
-        setStats({
-          totalTenders: tendersWithPriority.length,
-          activeBids: tendersWithPriority.filter(t => t.status === 'new' || t.status === 'active').length,
-          urgentTenders: tendersWithPriority.filter(t => t.priority === 'hot').length,
-          averageBudget: tendersWithPriority.length > 0
-            ? Math.round(tendersWithPriority.reduce((acc, curr) => acc + curr.budget, 0) / tendersWithPriority.length)
-            : 0
-        });
-      } catch (err) {
-        console.error('Error fetching tenders:', err);
-        setError('Failed to load tenders. Please try again later.');
-      } finally {
-        setLoading(false);
+  // Function to fetch tenders
+  const fetchTenders = async () => {
+    try {
+      const currentUser = userService.getCurrentUser();
+      if (!currentUser || currentUser.role !== 'COMPANY') {
+        navigate('/company/login');
+        return;
       }
-    };
 
+      setLoading(true);
+      const data = await tenderService.getAllTenders();
+
+      // Add priority based on deadline proximity
+      const tendersWithPriority = data.map(tender => {
+        const deadlineDate = new Date(tender.deadline);
+        const today = new Date();
+        const daysLeft = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+
+        let priority = 'medium';
+        if (daysLeft <= 5) priority = 'hot';
+        else if (daysLeft <= 10) priority = 'high';
+
+        return {
+          ...tender,
+          priority,
+          daysLeft: daysLeft > 0 ? daysLeft : 0
+        };
+      });
+
+      setTenders(tendersWithPriority);
+      setFilteredTenders(tendersWithPriority);
+
+      // Calculate stats
+      setStats({
+        totalTenders: tendersWithPriority.length,
+        activeBids: tendersWithPriority.filter(t => t.status === 'new' || t.status === 'active').length,
+        urgentTenders: tendersWithPriority.filter(t => t.priority === 'hot').length,
+        averageBudget: tendersWithPriority.length > 0
+          ? Math.round(tendersWithPriority.reduce((acc, curr) => acc + curr.budget, 0) / tendersWithPriority.length)
+          : 0
+      });
+    } catch (err) {
+      console.error('Error fetching tenders:', err);
+      setError('Failed to load tenders. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch tenders on component mount
+  useEffect(() => {
     fetchTenders();
   }, [navigate]);
 
@@ -317,17 +318,22 @@ const CompanyTenderDashboard = () => {
           <FilterSection onFilterChange={handleFilterChange} />
 
           {/* Tender Cards Grid */}
-          {filteredTenders.length > 0 ? (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTenders.map(tender => (
-          <TenderCard
-            key={tender.id}
-            tender={tender}
-            onTenderClick={handleTenderClick}
-          />
-        ))}
-      </div>
-    ) : (
+          {loading ? (
+            <div className="flex justify-center items-center min-h-[200px]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : filteredTenders.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTenders.map(tender => tender && tender.title ? (
+                <TenderCard
+                  key={tender.id}
+                  tender={tender}
+                  onTenderClick={handleTenderClick}
+                  onBidSubmit={() => fetchTenders()}
+                />
+              ) : null)}
+            </div>
+          ) : (
             <div className="text-center py-12">
               <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-4 text-lg font-medium text-gray-900">No tenders found</h3>

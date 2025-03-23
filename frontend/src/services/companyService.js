@@ -81,6 +81,33 @@ const companyService = {
       throw error;
     }
   },
+
+  getCompanyDashboardStats: async (companyId) => {
+    try {
+      const [bidStats, performanceMetrics] = await Promise.all([
+        api.get(`/analytics/bids/statistics/${companyId}`),
+        api.get(`/analytics/bids/performance/${companyId}`)
+      ]);
+
+      return {
+        activeProjects: bidStats.data.activeBids,
+        pendingQuotes: bidStats.data.pendingBids,
+        projectCompletion: bidStats.data.successRate,
+        clientSatisfaction: performanceMetrics.data.competitiveIndex
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getCompanyUpcomingDeadlines: async (companyId) => {
+    try {
+      const response = await api.get(`/dashboard/company/${companyId}/upcoming-deadlines`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default companyService;

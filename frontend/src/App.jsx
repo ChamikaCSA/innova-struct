@@ -4,6 +4,7 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
+import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/client-dashboard/Home";
 import Register from "./pages/Authentication/Register";
@@ -32,6 +33,7 @@ import CompanyLogin from "./pages/Authentication/CompanyLogin";
 const App = () => {
   return (
     <div>
+      <Toaster position="top-right" />
       <Router>
         <Routes>
           {/* Public routes */}

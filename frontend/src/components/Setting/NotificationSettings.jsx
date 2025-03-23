@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import userService from '../../services/userService';
+import settingsService from '../../services/settingsService';
+import { toast } from 'react-hot-toast';
 
 const NotificationSettings = () => {
   const [notifications, setNotifications] = useState({
@@ -7,6 +10,54 @@ const NotificationSettings = () => {
     projectUpdates: true,
     marketing: false
   });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadNotificationSettings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const currentUser = userService.getCurrentUser();
+        if (currentUser) {
+          try {
+            const notificationData = await settingsService.getNotificationSettings(currentUser.id);
+            setNotifications(notificationData);
+          } catch (err) {
+            // If the endpoint doesn't exist yet, we'll use the default values
+            console.log('Using default notification settings');
+          }
+        }
+      } catch (err) {
+        console.error('Error loading notification settings:', err);
+        setError('Failed to load notification settings. Please try again.');
+        toast.error('Failed to load notification settings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNotificationSettings();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const currentUser = userService.getCurrentUser();
+      if (currentUser) {
+        await settingsService.updateNotificationSettings(currentUser.id, notifications);
+        toast.success('Notification settings updated successfully');
+      }
+    } catch (err) {
+      console.error('Error saving notification settings:', err);
+      setError('Failed to save notification settings. Please try again.');
+      toast.error('Failed to save notification settings');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -39,6 +90,21 @@ const NotificationSettings = () => {
           </div>
         ))}
       </div>
+
+      <button
+        type="button"
+        onClick={handleSaveSettings}
+        disabled={loading || saving}
+        className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:ring-offset-gray-800"
+      >
+        {saving ? 'Saving...' : 'Save Changes'}
+      </button>
+
+      {error && (
+        <div className="mt-2 text-sm text-red-600">
+          {error}
+        </div>
+      )}
     </div>
   );
 };

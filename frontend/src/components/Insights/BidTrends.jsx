@@ -11,14 +11,11 @@ const BidTrends = () => {
   const [error, setError] = useState(null);
   const [timeframe, setTimeframe] = useState('month');
 
-  // Mock company ID - in a real app, this would come from auth context or props
-  const companyId = '1';
-
   useEffect(() => {
     const fetchBidTrends = async () => {
       setLoading(true);
       try {
-        const data = await analyticsService.getBidTrends(companyId, timeframe);
+        const data = await analyticsService.getBidTrends(timeframe);
         // Ensure data is an array before setting state
         const processedData = Array.isArray(data) ? data : [];
         setBidData(processedData);
@@ -35,7 +32,7 @@ const BidTrends = () => {
     };
 
     fetchBidTrends();
-  }, [companyId, timeframe]);
+  }, [timeframe]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {

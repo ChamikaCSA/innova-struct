@@ -24,6 +24,7 @@ import {
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react';
+import userService from '../../services/userService';
 
 // Register ChartJS components
 ChartJS.register(
@@ -100,65 +101,84 @@ const TenderAnalytics = () => {
     averageMarkup: 0
   });
   const [loading, setLoading] = useState(true);
+  const [companyId, setCompanyId] = useState(null);
 
-  // In a real app, this would come from auth context
-  // For now, using a consistent ID for testing
-  const companyId = "company123";
-
-  // TODO: Replace with actual auth context when available
-  // const { companyId } = useAuth();
+  // Fetch company ID from user service
+  useEffect(() => {
+    const fetchCompanyId = async () => {
+      try {
+        const currentUser = userService.getCurrentUser();
+        if (!currentUser) {
+          console.error('No user found');
+          return;
+        }
+        const userDetails = await userService.getUserById(currentUser.id);
+        if (!userDetails.companyId) {
+          console.error('No company ID found for user');
+          return;
+        }
+        setCompanyId(userDetails.companyId);
+      } catch (error) {
+        console.error('Error fetching company ID:', error);
+      }
+    };
+    fetchCompanyId();
+  }, []);
 
   // Fetch analytics data
   useEffect(() => {
     const fetchAnalyticsData = async () => {
+      if (!companyId) {
+        return;
+      }
+
       setLoading(true);
       try {
-        // Fetch success rate data
-        const successRateData = await analyticsService.getBidSuccessRate(companyId, timeframe);
-        const successRateChartData = {
-          ...chartData.bidSuccess,
-          labels: successRateData.labels,
-          datasets: [{
-            ...chartData.bidSuccess.datasets[0],
-            data: successRateData.data
-          }]
-        };
-
-        // Fetch bid volume data
-        const volumeData = await analyticsService.getBidVolume(companyId, timeframe);
-        const volumeChartData = {
-          ...chartData.bidVolume,
-          labels: volumeData.labels,
-          datasets: [{
-            ...chartData.bidVolume.datasets[0],
-            data: volumeData.data
-          }]
-        };
-
-        // Fetch bid distribution data
-        const distributionData = await analyticsService.getBidDistribution(companyId);
-        const distributionChartData = {
-          ...chartData.bidDistribution,
-          labels: distributionData.labels,
-          datasets: [{
-            ...chartData.bidDistribution.datasets[0],
-            data: distributionData.data
-          }]
-        };
+        // Fetch all data in parallel for better performance
+        const [
+          successRateData,
+          volumeData,
+          distributionData,
+          statsData,
+          metricsData
+        ] = await Promise.all([
+          analyticsService.getBidSuccessRate(companyId, timeframe),
+          analyticsService.getBidVolume(companyId, timeframe),
+          analyticsService.getBidDistribution(companyId),
+          analyticsService.getBidStatistics(companyId),
+          analyticsService.getPerformanceMetrics(companyId)
+        ]);
 
         // Update chart data
         setChartData({
-          bidSuccess: successRateChartData,
-          bidVolume: volumeChartData,
-          bidDistribution: distributionChartData
+          bidSuccess: {
+            ...chartData.bidSuccess,
+            labels: successRateData.labels,
+            datasets: [{
+              ...chartData.bidSuccess.datasets[0],
+              data: successRateData.data
+            }]
+          },
+          bidVolume: {
+            ...chartData.bidVolume,
+            labels: volumeData.labels,
+            datasets: [{
+              ...chartData.bidVolume.datasets[0],
+              data: volumeData.data
+            }]
+          },
+          bidDistribution: {
+            ...chartData.bidDistribution,
+            labels: distributionData.labels,
+            datasets: [{
+              ...chartData.bidDistribution.datasets[0],
+              data: distributionData.data
+            }]
+          }
         });
 
-        // Fetch statistics
-        const statsData = await analyticsService.getBidStatistics(companyId);
+        // Update statistics and metrics
         setStatistics(statsData);
-
-        // Fetch performance metrics
-        const metricsData = await analyticsService.getPerformanceMetrics(companyId);
         setPerformanceMetrics(metricsData);
       } catch (error) {
         console.error('Error fetching analytics data:', error);
@@ -178,7 +198,7 @@ const TenderAnalytics = () => {
     return () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange);
     };
-  }, [timeframe]);
+  }, [timeframe, companyId]);
 
   const chartOptions = {
     responsive: true,

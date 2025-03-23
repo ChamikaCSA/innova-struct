@@ -3,7 +3,9 @@ package com.example.backend.service;
 import com.example.backend.dto.PortfolioDTO;
 import com.example.backend.model.Company;
 import com.example.backend.model.Project;
+import com.example.backend.model.Certification;
 import com.example.backend.repository.CompanyRepository;
+import com.example.backend.repository.CertificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,9 @@ public class PortfolioService {
 
     @Autowired
     private CompanyRepository companyRepository;
+
+    @Autowired
+    private CertificationRepository certificationRepository;
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -67,6 +72,46 @@ public class PortfolioService {
         }
         company.setProjects(projects);
 
+        // Save company first to ensure it has an ID
+        company = companyRepository.save(company);
+
+        // Handle certifications
+        if (portfolioDTO.getCertifications() != null) {
+            List<Certification> certifications = new ArrayList<>();
+            int certImageIndex = 0;
+            for (PortfolioDTO.CertificationDTO certDTO : portfolioDTO.getCertifications()) {
+                Certification certification = new Certification();
+                certification.setName(certDTO.getName());
+                certification.setOrganization(certDTO.getOrganization());
+                certification.setIssueDate(certDTO.getIssueDate());
+                certification.setExpiryDate(certDTO.getExpiryDate());
+                certification.setCompany(company); // Set the company reference
+
+                // Handle certificate image
+                if (certImageIndex < certificateImages.size()) {
+                    String imageUrl = fileStorageService.storeFile(certificateImages.get(certImageIndex));
+                    certification.setImageUrl(imageUrl);
+                    certImageIndex++;
+                }
+
+                // Save each certification
+                certification = certificationRepository.save(certification);
+                certifications.add(certification);
+            }
+            company.setCertifications(certifications);
+        }
+
+        // Handle contact information
+        if (portfolioDTO.getContactInformation() != null) {
+            company.setEmail(portfolioDTO.getContactInformation().get("email"));
+            company.setPhoneNumber(portfolioDTO.getContactInformation().get("phoneNumber"));
+            company.setWebsite(portfolioDTO.getContactInformation().get("website"));
+        }
+
+        // Handle financial information
+        company.setAnnualRevenue(portfolioDTO.getAnnualRevenue());
+        company.setFundingSources(portfolioDTO.getFundingSources());
+
         // Update timestamps
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         company.setUpdatedAt(LocalDateTime.now().format(formatter));
@@ -74,7 +119,7 @@ public class PortfolioService {
             company.setCreatedAt(LocalDateTime.now().format(formatter));
         }
 
-        // Save the updated company
+        // Save the final updated company
         return companyRepository.save(company);
     }
 }

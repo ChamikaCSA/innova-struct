@@ -55,6 +55,7 @@ public class UserService {
                     user.setName(userDetails.getName());
                     user.setEmail(userDetails.getEmail());
                     user.setProfileImage(userDetails.getProfileImage());
+                    user.setPhone(userDetails.getPhone());
                     user.setUpdatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
                     return userRepository.save(user);
                 })

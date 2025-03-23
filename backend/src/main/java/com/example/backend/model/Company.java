@@ -2,6 +2,8 @@ package com.example.backend.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.util.List;
 
 @Document(collection = "companies")
@@ -25,6 +27,17 @@ public class Company {
     private TrackRecord trackRecord;
     private FinancialStability financialStability;
     private ServicesOffered servicesOffered;
+
+    // New fields for portfolio
+    @DBRef
+    @JsonManagedReference
+    private List<Certification> certifications;
+    private String email;
+    private String phoneNumber;
+    private String website;
+    private String annualRevenue;
+    private String fundingSources;
+
     private String createdAt;
     private String updatedAt;
 
@@ -189,5 +202,53 @@ public class Company {
 
     public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<Certification> getCertifications() {
+        return certifications;
+    }
+
+    public void setCertifications(List<Certification> certifications) {
+        this.certifications = certifications;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public String getAnnualRevenue() {
+        return annualRevenue;
+    }
+
+    public void setAnnualRevenue(String annualRevenue) {
+        this.annualRevenue = annualRevenue;
+    }
+
+    public String getFundingSources() {
+        return fundingSources;
+    }
+
+    public void setFundingSources(String fundingSources) {
+        this.fundingSources = fundingSources;
     }
 }

@@ -352,7 +352,8 @@ TenderCard.propTypes = {
     daysLeft: PropTypes.number,
     deadline: PropTypes.string
   }).isRequired,
-  onBidSubmit: PropTypes.func
+  onBidSubmit: PropTypes.func,
+  onTenderClick: PropTypes.func
 };
 
 export default TenderCard;

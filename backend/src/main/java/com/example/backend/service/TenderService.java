@@ -67,11 +67,52 @@ public class TenderService {
     public Tender updateTender(String id, Tender tenderDetails) {
         return tenderRepository.findById(id)
                 .map(tender -> {
-                    tender.setTitle(tenderDetails.getTitle());
-                    tender.setDescription(tenderDetails.getDescription());
-                    tender.setBudget(tenderDetails.getBudget());
-                    tender.setDeadline(tenderDetails.getDeadline());
-                    tender.setStatus(tenderDetails.getStatus());
+                    // Only update fields that are provided in tenderDetails
+                    if (tenderDetails.getTitle() != null) {
+                        tender.setTitle(tenderDetails.getTitle());
+                    }
+                    if (tenderDetails.getDescription() != null) {
+                        tender.setDescription(tenderDetails.getDescription());
+                    }
+                    if (tenderDetails.getBudget() > 0) {
+                        tender.setBudget(tenderDetails.getBudget());
+                    }
+                    if (tenderDetails.getDeadline() != null) {
+                        tender.setDeadline(tenderDetails.getDeadline());
+                    }
+                    if (tenderDetails.getStatus() != null) {
+                        tender.setStatus(tenderDetails.getStatus());
+
+                        // If tender is being closed (status changed to 'ended')
+                        if ("ended".equals(tenderDetails.getStatus())) {
+                            // Get all bids for this tender
+                            List<String> bidIds = tender.getBidIds();
+                            if (bidIds != null && !bidIds.isEmpty()) {
+                                List<Bid> bids = bidRepository.findAllById(bidIds);
+
+                                // Find the lowest bid
+                                Bid lowestBid = null;
+                                double lowestAmount = Double.MAX_VALUE;
+
+                                for (Bid bid : bids) {
+                                    if (bid.getAmount() < lowestAmount) {
+                                        lowestAmount = bid.getAmount();
+                                        lowestBid = bid;
+                                    }
+                                }
+
+                                // Accept the lowest bid and reject others
+                                for (Bid bid : bids) {
+                                    if (bid == lowestBid) {
+                                        bid.setStatus("accepted");
+                                    } else {
+                                        bid.setStatus("rejected");
+                                    }
+                                    bidRepository.save(bid);
+                                }
+                            }
+                        }
+                    }
                     return tenderRepository.save(tender);
                 })
                 .orElseThrow(() -> new RuntimeException("Tender not found with id " + id));

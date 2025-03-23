@@ -1,5 +1,8 @@
-import { useState } from 'react';
-import {  Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import userService from '../../services/userService';
+import settingsService from '../../services/settingsService';
+import { toast } from 'react-hot-toast';
 
 const PrivacySettings = () => {
   const [privacy, setPrivacy] = useState({
@@ -7,6 +10,54 @@ const PrivacySettings = () => {
     showEmail: true,
     showPhone: false
   });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadPrivacySettings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const currentUser = userService.getCurrentUser();
+        if (currentUser) {
+          try {
+            const privacyData = await settingsService.getPrivacySettings(currentUser.id);
+            setPrivacy(privacyData);
+          } catch (err) {
+            // If the endpoint doesn't exist yet, we'll use the default values
+            console.log('Using default privacy settings');
+          }
+        }
+      } catch (err) {
+        console.error('Error loading privacy settings:', err);
+        setError('Failed to load privacy settings. Please try again.');
+        toast.error('Failed to load privacy settings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPrivacySettings();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const currentUser = userService.getCurrentUser();
+      if (currentUser) {
+        await settingsService.updatePrivacySettings(currentUser.id, privacy);
+        toast.success('Privacy settings updated successfully');
+      }
+    } catch (err) {
+      console.error('Error saving privacy settings:', err);
+      setError('Failed to save privacy settings. Please try again.');
+      toast.error('Failed to save privacy settings');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -18,8 +69,8 @@ const PrivacySettings = () => {
           <div className="flex space-x-4">
             <button
               className={`flex items-center px-4 py-2 rounded-md ${
-                privacy.profileVisibility === 'public' 
-                  ? 'bg-yellow-100 text-yellow-700' 
+                privacy.profileVisibility === 'public'
+                  ? 'bg-yellow-100 text-yellow-700'
                   : 'bg-gray-100 text-gray-700'
               }`}
               onClick={() => setPrivacy({ ...privacy, profileVisibility: 'public' })}
@@ -29,8 +80,8 @@ const PrivacySettings = () => {
             </button>
             <button
               className={`flex items-center px-4 py-2 rounded-md ${
-                privacy.profileVisibility === 'private' 
-                  ? 'bg-yellow-100 text-yellow-700' 
+                privacy.profileVisibility === 'private'
+                  ? 'bg-yellow-100 text-yellow-700'
                   : 'bg-gray-100 text-gray-700'
               }`}
               onClick={() => setPrivacy({ ...privacy, profileVisibility: 'private' })}
@@ -83,6 +134,21 @@ const PrivacySettings = () => {
           </div>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={handleSaveSettings}
+        disabled={loading || saving}
+        className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:ring-offset-gray-800"
+      >
+        {saving ? 'Saving...' : 'Save Changes'}
+      </button>
+
+      {error && (
+        <div className="mt-2 text-sm text-red-600">
+          {error}
+        </div>
+      )}
     </div>
   );
 };

@@ -30,12 +30,17 @@ const RegisteredCompaniesPage = () => {
       try {
         setIsLoading(true);
         const data = await companyService.getAllCompanies();
-        setCompanies(data);
-        setFilteredCompanies(data);
+        // Ensure data is an array
+        const companiesArray = Array.isArray(data) ? data : [];
+        setCompanies(companiesArray);
+        setFilteredCompanies(companiesArray);
         setError(null);
       } catch (err) {
         console.error('Error fetching companies:', err);
         setError('Failed to load companies data');
+        // Initialize with empty arrays on error
+        setCompanies([]);
+        setFilteredCompanies([]);
       } finally {
         setIsLoading(false);
       }
@@ -55,7 +60,7 @@ const RegisteredCompaniesPage = () => {
 
       if (filters.location) {
         results = results.filter(company =>
-          company.location.toLowerCase().includes(filters.location.toLowerCase())
+          company.location?.toLowerCase().includes(filters.location.toLowerCase())
         );
       }
 
@@ -90,10 +95,14 @@ const RegisteredCompaniesPage = () => {
       }
 
       setFilteredCompanies(results);
+    } catch (err) {
+      console.error('Error filtering companies:', err);
+      setFilteredCompanies([]);
     } finally {
       setIsLoading(false);
     }
   };
+
   const handleSearch = (event) => {
     const query = event.target.value.toLowerCase();
     setSearchQuery(query);
@@ -101,7 +110,7 @@ const RegisteredCompaniesPage = () => {
     let results = [...companies];
     if (query) {
       results = results.filter(company =>
-        company.name.toLowerCase().includes(query)
+        company.name?.toLowerCase().includes(query)
       );
     }
     setFilteredCompanies(results);
@@ -151,8 +160,6 @@ const RegisteredCompaniesPage = () => {
     );
   };
 
-
-
   return (
     <div className="flex">
       <ClientNavbar />
@@ -192,8 +199,6 @@ const RegisteredCompaniesPage = () => {
             </div>
           </div>
 
-
-
           <Filter onFilterChange={handleFilterChange} />
 
           {isLoading ? (
@@ -210,11 +215,15 @@ const RegisteredCompaniesPage = () => {
                 <Link to={`/client/companies/${company.id}`} key={company.id} className="block h-full">
                   <div className="card bg-base-100 shadow-xl h-full hover:shadow-2xl transition-shadow">
                     <figure className="h-48 w-full">
-                      <img
-                        src={company.coverImage}
-                        alt={company.name}
-                        className="w-full h-full object-cover"
-                      />
+                      {company.coverImage ? (
+                        <img
+                          src={company.coverImage}
+                          alt={company.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-50" />
+                      )}
                     </figure>
                     <div className="card-body flex flex-col justify-between p-6">
                       <div>

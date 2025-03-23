@@ -276,7 +276,7 @@ const ActiveBids = () => {
               },
               {
                 title: 'Total Bid Value',
-                value: `$${bids.reduce((sum, bid) => sum + (bid.bidAmount || 0), 0).toLocaleString()}`,
+                value: `$${bids.reduce((sum, bid) => sum + (bid.amount || 0), 0).toLocaleString()}`,
                 icon: <DollarSign className="w-6 h-6 text-purple-600" />,
                 bgColor: 'bg-purple-100'
               }
